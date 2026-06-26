@@ -1,4 +1,8 @@
-# CLAUDE.md — working in metacurator
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Working in metacurator
 
 Orientation for an agent picking up this repo. Read this, then
 [`docs/spec/README.md`](docs/spec/README.md) and the ADRs in `docs/adr/`.
@@ -23,7 +27,9 @@ stubs that raise `NotImplementedError` pointing at their spec.
 4. **Decisions are ADRs (ADR-0001).** Architectural changes get a new ADR; supersede,
    don't edit accepted ones.
 5. **Generated code is not edited (ADR-0003).** `src/metacurator/_generated/` is built
-   from `schema/*.yaml` via `make -C schema all`.
+   from `schema/*.yaml` via `just gen`. It is **not checked in** — the directory does not
+   exist on a fresh clone; run `just gen` (needs the `schema` extra) before anything
+   imports generated models.
 
 ## Layout
 
@@ -39,10 +45,19 @@ stubs that raise `NotImplementedError` pointing at their spec.
 ## Dev
 
 ```bash
-uv sync --extra dev --extra schema --extra mcp --extra tables
-uv run ruff check . && uv run pytest
-make -C schema all   # regenerate models/json-schema from LinkML
+just sync                                          # uv sync with all extras
+just lint && just test                             # ruff + pytest
+just test tests/test_models.py::test_name -q       # run a single test
+just gen                                            # (re)generate models/json-schema into src/metacurator/_generated/
 ```
+
+The recipes wrap `uv`; run `just` with no argument to list them. Equivalents:
+`uv sync --extra dev --extra schema --extra mcp --extra tables`,
+`uv run ruff check .`, `uv run pytest`.
+
+Tests are offline by default; set `RUN_INTEGRATION=1` for live network tests. Ruff is
+configured with `E,F,I,UP,B,SIM` at line-length 100 (`pyproject.toml`); mypy is available
+via the `dev` extra.
 
 ## Suggested first implementation order
 
