@@ -9,8 +9,12 @@ a tidy, ontology-grounded sample table into a **spec-first toolkit**: a library 
 deterministic tools, a pluggable LinkML schema describing the target standard, and a
 narrow agent boundary for the few genuinely ambiguous steps.
 
-> Status: **scaffold / pre-alpha.** The specs and decisions are in place; most modules
-> are stubs. This repo is designed to be *built from its specs* — see below.
+> Status: **alpha.** The full deterministic spine is implemented to its specs
+> (resolve · archive · acquire · tables · dictionary · ground · diff · report · pipeline),
+> along with the agent boundary (`judge`) and the three faces — Python API, CLI, and the
+> streamable-HTTP MCP server. Tests run offline (`uv run pytest`); set `RUN_INTEGRATION=1`
+> for the live-network cases. The schema and curation coverage are still illustrative
+> (one starter schema, `cmd`). This repo is built *from its specs* — see below.
 
 ## Why it exists
 
