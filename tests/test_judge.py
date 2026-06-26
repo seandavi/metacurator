@@ -7,7 +7,6 @@ from typing import Any
 import pytest
 
 from metacurator import judge
-from metacurator.dictionary import Dictionary
 from metacurator.models import (
     ConfidenceTier,
     GroundedTerm,
@@ -39,35 +38,30 @@ def _table(columns, records, **prov) -> SourceTable:
     )
 
 
-@pytest.fixture
-def cmd() -> Dictionary:
-    return Dictionary()
-
-
 # -- classify_tables ---------------------------------------------------------
 
 
-def test_classify_tables_returns_choice(cmd):
+def test_classify_tables_returns_choice(tdict):
     tables = [
         _table(["gene", "fold_change"], [{"gene": "TP53"}], sheet="deg"),
         _table(["subject_id", "disease"], [{"subject_id": "s1"}], sheet="samples"),
     ]
     llm = MockLLM({"table_index": 1, "rationale": "per-subject", "confidence": 0.9})
-    choice = judge.classify_tables(tables, cmd, llm=llm)
+    choice = judge.classify_tables(tables, tdict, llm=llm)
     assert choice.table_index == 1
     assert choice.needs_review is False
 
 
-def test_classify_low_confidence_flags_review(cmd):
+def test_classify_low_confidence_flags_review(tdict):
     tables = [_table(["a"], [{"a": "1"}])]
     llm = MockLLM({"table_index": 0, "confidence": 0.2})
-    assert judge.classify_tables(tables, cmd, llm=llm).needs_review is True
+    assert judge.classify_tables(tables, tdict, llm=llm).needs_review is True
 
 
-def test_classify_out_of_range_index_clamps_and_reviews(cmd):
+def test_classify_out_of_range_index_clamps_and_reviews(tdict):
     tables = [_table(["a"], [{"a": "1"}])]
     llm = MockLLM({"table_index": 9, "confidence": 0.99})
-    choice = judge.classify_tables(tables, cmd, llm=llm)
+    choice = judge.classify_tables(tables, tdict, llm=llm)
     assert choice.table_index == 0
     assert choice.needs_review is True
 
@@ -75,27 +69,27 @@ def test_classify_out_of_range_index_clamps_and_reviews(cmd):
 # -- propose_mapping ---------------------------------------------------------
 
 
-def test_propose_mapping_valid(cmd):
-    table = _table(["Sex", "BMI"], [{"Sex": "Male", "BMI": "23.5"}])
+def test_propose_mapping_valid(tdict):
+    table = _table(["Status", "Score"], [{"Status": "Case", "Score": "23.5"}])
     llm = MockLLM(
         {
             "items": [
-                {"source_col": "Sex", "target_field": "sex", "confidence": 0.9},
-                {"source_col": "BMI", "target_field": "bmi", "confidence": 0.9},
+                {"source_col": "Status", "target_field": "status", "confidence": 0.9},
+                {"source_col": "Score", "target_field": "score", "confidence": 0.9},
             ]
         }
     )
-    mapping = judge.propose_mapping(table, cmd, llm=llm)
-    assert {i.target_field for i in mapping.items} == {"sex", "bmi"}
+    mapping = judge.propose_mapping(table, tdict, llm=llm)
+    assert {i.target_field for i in mapping.items} == {"status", "score"}
 
 
-def test_propose_mapping_unknown_field_rejected(cmd):
-    table = _table(["Sex"], [{"Sex": "Male"}])
+def test_propose_mapping_unknown_field_rejected(tdict):
+    table = _table(["Status"], [{"Status": "Case"}])
     llm = MockLLM(
-        {"items": [{"source_col": "Sex", "target_field": "not_a_field", "confidence": 0.9}]}
+        {"items": [{"source_col": "Status", "target_field": "not_a_field", "confidence": 0.9}]}
     )
     with pytest.raises(judge.JudgeContractError, match="not_a_field"):
-        judge.propose_mapping(table, cmd, llm=llm)
+        judge.propose_mapping(table, tdict, llm=llm)
 
 
 # -- disambiguate ------------------------------------------------------------

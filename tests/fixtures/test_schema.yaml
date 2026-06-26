@@ -1,0 +1,88 @@
+id: https://w3id.org/metacurator/test_schema
+name: metacurator_test_schema
+description: >-
+  A synthetic LinkML schema used by the dictionary / validation / pipeline tests so they
+  exercise the *generic* contract (identifier, required, multivalued, numeric, static enum
+  with a meaning, dynamic reachable_from enums, and a dynamic enum with an explicit
+  permissible value) WITHOUT depending on the shipped cmd schema. cmd-specific assertions
+  live only in tests/test_cmd_schema.py. Its CURIEs match the fixture ontology store in
+  conftest.py.
+license: MIT
+default_range: string
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  test: https://w3id.org/metacurator/test_schema/
+  NCIT: http://purl.obolibrary.org/obo/NCIT_
+  UBERON: http://purl.obolibrary.org/obo/UBERON_
+
+default_prefix: test
+imports:
+  - linkml:types
+
+classes:
+  TestRecord:
+    description: One synthetic record row for exercising the dictionary contract.
+    slots:
+      - record_id
+      - group
+      - accession
+      - score
+      - status
+      - site
+      - condition
+    slot_usage:
+      record_id:
+        identifier: true
+
+slots:
+  record_id:
+    required: true
+  group:
+    required: true
+  accession:
+    multivalued: true
+  score:
+    range: float
+  status:
+    range: StatusEnum
+  site:
+    range: SiteEnum
+  condition:
+    range: ConditionEnum
+
+enums:
+  StatusEnum:
+    description: A static enum with verified meanings (no reachability binding).
+    permissible_values:
+      Case:
+        meaning: NCIT:C49152
+      Control:
+        meaning: NCIT:C28143
+
+  SiteEnum:
+    description: Dynamic enum — any UBERON anatomical entity (grounded, SPEC 070).
+    include:
+      - reachable_from:
+          source_ontology: obo:uberon
+          source_nodes:
+            - UBERON:0001062
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
+
+  ConditionEnum:
+    description: >-
+      Dynamic enum — any NCIT disease/disorder/finding; 'Healthy' is an explicit
+      permissible value (mirrors the cmd pattern without being cmd).
+    include:
+      - reachable_from:
+          source_ontology: obo:ncit
+          source_nodes:
+            - NCIT:C7057
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
+    permissible_values:
+      Healthy:
+        meaning: NCIT:C115935
