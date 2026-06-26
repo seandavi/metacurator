@@ -38,6 +38,7 @@ Each spec is self-contained and follows the template in [`_TEMPLATE.md`](_TEMPLA
 | [110](110-pipeline.md) | `pipeline`: per-study orchestration + fan-out | deterministic | **drafted** ✓ |
 | [120](120-mcp-tool-surface.md) | MCP (streamable HTTP) + CLI + Python API | deterministic | **drafted** ✓ |
 | [130](130-judgment-clients.md) | `llm`: judgment clients (LLMClient adapters) + factory | agent-support | **drafted** |
+| [140](140-profile-and-type.md) | `profile`: value-driven semantic typing + ontology routing | hybrid | **drafted** |
 
 Status: **drafted** = spec written to template depth; **✓** = implemented to that spec with
 offline tests. Only the glossary (000) remains a template stub.
