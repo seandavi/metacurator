@@ -2,7 +2,8 @@
 
 - Status: drafted
 - Determinism: deterministic
-- Implements: `src/metacurator/mcp_server.py`, `src/metacurator/cli.py`
+- Implements: `src/metacurator/mcp_server.py`, `src/metacurator/cli.py`,
+  `src/metacurator/__init__.py` (the Python API surface)
 - Related: ADR-0006, ADR-0004
 
 ## Purpose
@@ -33,8 +34,11 @@ human-readable; `--json` emits the typed object.
 
 ## Python API
 
-`from metacurator import resolve, archive, ground, ...` — the canonical entry points the
-CLI and MCP wrap. This is the interface the deterministic `pipeline` (SPEC 110) uses.
+`from metacurator import resolve, acquire, ground, diff, load_tables, Dictionary,
+build_accession_map, build_report, curate_study, curate_many` — the canonical entry points
+the CLI and MCP wrap. This is the interface the deterministic `pipeline` (SPEC 110) uses.
+The four verb tools (`resolve`/`acquire`/`ground`/`diff`) are bound eagerly (their names
+shadow their submodules); the rest resolve lazily so `import metacurator` stays light.
 
 ## Invariants
 
