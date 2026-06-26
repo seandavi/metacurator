@@ -154,6 +154,9 @@ def curate_study(
         "n_candidate_rows": len(rows),
         "needs_review": needs_review,
     }
+    # Record the model behind the judgment calls (SPEC 130) for reproducibility.
+    if hasattr(llm, "describe"):
+        provenance["llm"] = llm.describe()
     note_parts: list[str] = []
     if val_errors:
         note_parts.append("Validation issues: " + "; ".join(val_errors[:10]))
