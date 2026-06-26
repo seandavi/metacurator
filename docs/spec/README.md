@@ -25,18 +25,18 @@ Each spec is self-contained and follows the template in [`_TEMPLATE.md`](_TEMPLA
 | spec | component | determinism | status |
 |---|---|---|---|
 | [000](000-glossary.md) | Glossary & conventions | — | stub |
-| [010](010-data-model.md) | Typed contracts (the objects every stage passes) | — | **drafted** |
-| [020](020-resolve.md) | `resolve`: PMID→PMCID/DOI, OA triage | deterministic | stub |
-| [030](030-archive-ena.md) | `archive`: ENA/BioSample accession + ID map | deterministic | stub |
-| [040](040-acquire.md) | `acquire`: supplement retrieval ladder | deterministic | stub |
-| [050](050-tables.md) | `tables`: load xlsx/docx/pdf/csv → table | deterministic | stub |
-| [060](060-dictionary.md) | `dictionary`: LinkML schema load + validation | deterministic | stub |
-| [070](070-ontology-grounding.md) | `ground` + grounding backends | deterministic | **drafted** |
-| [080](080-diff-qc.md) | `diff`: candidate-vs-curated & self-consistency QC | deterministic | stub |
-| [090](090-report.md) | `report`: verdict report + provenance | deterministic | stub |
-| [100](100-judge.md) | `judge`: the agent boundary (3 calls) | agent | **drafted** |
-| [110](110-pipeline.md) | `pipeline`: per-study orchestration + fan-out | deterministic | stub |
-| [120](120-mcp-tool-surface.md) | MCP (streamable HTTP) + CLI + Python API | deterministic | **drafted** |
+| [010](010-data-model.md) | Typed contracts (the objects every stage passes) | — | **drafted** ✓ |
+| [020](020-resolve.md) | `resolve`: PMID→PMCID/DOI, OA triage | deterministic | **drafted** ✓ |
+| [030](030-archive-ena.md) | `archive`: ENA/BioSample accession + ID map | deterministic | **drafted** ✓ |
+| [040](040-acquire.md) | `acquire`: supplement retrieval ladder | deterministic | **drafted** ✓ |
+| [050](050-tables.md) | `tables`: load xlsx/docx/pdf/csv → table | deterministic | **drafted** ✓ |
+| [060](060-dictionary.md) | `dictionary`: LinkML schema load + validation | deterministic | **drafted** ✓ |
+| [070](070-ontology-grounding.md) | `ground` + grounding backends | deterministic | **drafted** ✓ |
+| [080](080-diff-qc.md) | `diff`: candidate-vs-curated & self-consistency QC | deterministic | **drafted** ✓ |
+| [090](090-report.md) | `report`: verdict report + provenance | deterministic | **drafted** ✓ |
+| [100](100-judge.md) | `judge`: the agent boundary (3 calls) | agent | **drafted** ✓ |
+| [110](110-pipeline.md) | `pipeline`: per-study orchestration + fan-out | deterministic | **drafted** ✓ |
+| [120](120-mcp-tool-surface.md) | MCP (streamable HTTP) + CLI + Python API | deterministic | **drafted** ✓ |
 
-Specs marked **drafted** are written out as exemplars of the expected depth; **stub**
-specs carry the template + a scope note for a later session to complete.
+Status: **drafted** = spec written to template depth; **✓** = implemented to that spec with
+offline tests. Only the glossary (000) remains a template stub.

@@ -10,8 +10,11 @@ Orientation for an agent picking up this repo. Read this, then
 ## What this is
 
 A spec-first toolkit to reproduce curated, ontology-grounded, sample-level metadata from
-publications. Status: **scaffold** — specs + decisions are in place; most modules are
-stubs that raise `NotImplementedError` pointing at their spec.
+publications. Status: **alpha** — the deterministic spine (SPEC 020–110), the agent
+boundary (`judge`, SPEC 100), and the tool surface (Python API + CLI + MCP, SPEC 120) are
+implemented to their specs with offline tests. Specs 010, 020–120 are all drafted. The
+`cmd` schema is still an illustrative starter; ontology/curation coverage is intentionally
+small. Extend behavior by changing the spec first, then the code (ADR-0002).
 
 ## The rules (non-negotiable)
 
