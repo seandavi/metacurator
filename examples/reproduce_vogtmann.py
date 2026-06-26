@@ -12,18 +12,31 @@ What is real here:
   curator's ``disease_ontology_term_id`` column — an independent reproduction of the
   ontology mapping.
 
-What is a stand-in:
-- The ``judge`` steps need a model; with no API key we let the *agent* supply the
-  table choice + column mapping directly (the consuming agent is the model — ADR-0006).
+Verified result (real run, Vertex ``gemini-2.5-pro`` doing classify + propose_mapping):
+the model independently produced the full 13-field column mapping, and metacurator's NCIT
+grounding matched the curator's ``disease_ontology_term_id`` on **110/110** rows
+("Colorectal Carcinoma" -> NCIT:C2955, branch-checked under NCIT:C2991; "Healthy" ->
+NCIT:C115935). Overall verdict PARTIAL (honest age/age_unit coverage gaps). With
+``--model`` omitted the agent supplies the same judgment offline.
+
+What is a stand-in (only when ``--model`` is omitted):
+- The ``judge`` steps need a model; without one we let the *agent* supply the table choice
+  + column mapping directly (the consuming agent is the model — ADR-0006).
 - We use the curated human-readable labels as the "source table" the curator/agent read
   from the paper (the SRA submission metadata for this study carries no phenotype — which
   is exactly why it was hand-curated). So the value-level diff is expected to be exact;
   the substantive, independent check is the grounding.
 
 Usage:
+    # agent-supplied judgment (no model/creds needed):
     uv run python examples/reproduce_vogtmann.py \
-        --curated ../curatedMetagenomicDataCuration/inst/curated \
-        --cache /path/to/ontology/cache
+        --curated ../curatedMetagenomicDataCuration/inst/curated --cache /path/to/cache
+
+    # real model judgment via Vertex (needs the [vertex] extra + GCP ADC):
+    GOOGLE_CLOUD_PROJECT=... GOOGLE_CLOUD_LOCATION=us-central1 \
+    uv run python examples/reproduce_vogtmann.py \
+        --curated ../curatedMetagenomicDataCuration/inst/curated --cache /path/to/cache \
+        --model vertex:gemini-2.5-pro
 """
 
 from __future__ import annotations
@@ -92,7 +105,21 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--curated", required=True, help="path to inst/curated")
     ap.add_argument("--cache", required=True, help="ontology store cache dir")
+    ap.add_argument(
+        "--model",
+        default=None,
+        help="provider:model (e.g. vertex:gemini-2.5-pro); omit to use agent-supplied judgment",
+    )
     args = ap.parse_args()
+
+    if args.model:
+        from metacurator.llm import make_client
+
+        llm = make_client(args.model)
+        print(f"JUDGE: real model — {args.model}\n")
+    else:
+        llm = AgentJudge()
+        print("JUDGE: agent-supplied (no model)\n")
 
     rows = read_curated(Path(args.curated))
     print(f"Loaded {len(rows)} curated rows for {STUDY}\n")
@@ -119,12 +146,15 @@ def main() -> None:
     report = curate_study(
         study,
         dictionary=dictionary,
-        llm=AgentJudge(),
+        llm=llm,
         backend=backend,
         tables=[source],
         reference=reference,
         key="sample_id",
     )
+    if report.provenance.get("llm"):
+        print(f"Model used for judgment: {report.provenance['llm']}")
+    print(f"Mapping the judge produced: {report.provenance['mapping_fields']}\n")
 
     print("=" * 78)
     print(render_markdown(report))
