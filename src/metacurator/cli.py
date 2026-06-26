@@ -155,6 +155,62 @@ def archive(
 
 
 @app.command()
+def run(
+    pmid: str = typer.Argument(..., help="PubMed ID of the study to curate"),
+    model: str = typer.Option("vertex:gemini-2.5-pro", "--model", help="provider:model"),
+    dest: str = typer.Option("./bronze", "--dest", help="where to save fetched supplements"),
+    cache: str = typer.Option(None, "--cache-dir", help="ontology store cache dir"),
+    schema: str = typer.Option(None, "--schema", help="LinkML schema (default cmd)"),
+    no_ground: bool = typer.Option(False, "--no-ground", help="skip ontology grounding"),
+    json_out: bool = typer.Option(False, "--json", help="emit the report JSON sidecar"),
+) -> None:
+    """Curate one study end-to-end with a real model judge (SPEC 110/130). [live]
+
+    Resolves the PMID, acquires open supplements, loads tables, and runs the pipeline with
+    the chosen model performing the three judgment calls. Grounds dynamic-enum fields
+    against the ontologies the schema binds (downloaded on first use).
+    """
+    from .acquire import acquire
+    from .dictionary import Dictionary
+    from .grounding.local_duckdb import LocalDuckDBBackend
+    from .llm import make_client
+    from .pipeline import curate_study
+    from .report import render_markdown, to_sidecar
+    from .resolve import resolve as _resolve
+    from .tables import load_tables
+
+    study = asyncio.run(_resolve(pmid))
+    typer.echo(f"resolved: pmid={study.pmid} pmcid={study.pmcid} oa={study.oa_status}")
+
+    result = asyncio.run(acquire(study, dest=Path(dest)))
+    if result.gap:
+        typer.echo(f"acquire: gap — {result.note}", err=True)
+        raise typer.Exit(code=2)
+    tables = [t for f in result.files for t in load_tables(f)]
+    typer.echo(
+        f"acquired {len(result.files)} file(s) via {result.method}; {len(tables)} table(s)"
+    )
+
+    dictionary = Dictionary(schema)
+    backend = None
+    if not no_ground:
+        base = Path(cache).expanduser() if cache else Path.home() / ".cache" / "metacurator"
+        backend = LocalDuckDBBackend(cache_dir=base / "ontology")
+        onts = sorted({b.ontology for b in dictionary.bindings().values()})
+        if onts:
+            typer.echo(f"ensuring ontologies for grounding: {onts}")
+            backend.ensure(onts)
+
+    report = curate_study(
+        study, dictionary=dictionary, llm=make_client(model), backend=backend
+    )
+    if json_out:
+        _emit(to_sidecar(report), True)
+    else:
+        typer.echo(render_markdown(report))
+
+
+@app.command()
 def serve() -> None:
     """Run the MCP server (streamable HTTP); deterministic tools only (ADR-0006). SPEC 120."""
     from .mcp_server import main
