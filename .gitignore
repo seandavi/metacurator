@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# uv
+.uv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Generated artifacts (regenerated from schema/ — see ADR-0003)
+src/metacurator/_generated/
+
+# Local data & ontology caches (see SPEC 070)
+data/
+*.ducklake
+*.db
+*.db.gz
+*.parquet
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

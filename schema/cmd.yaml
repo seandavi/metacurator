@@ -1,0 +1,150 @@
+id: https://w3id.org/metacurator/cmd
+name: cmd
+title: curatedMetagenomicData sample schema (starter)
+description: >-
+  The first concrete metacurator curation schema, modeling a curatedMetagenomicData
+  per-sample record. STARTER / ILLUSTRATIVE: a representative subset of slots is written
+  by hand to demonstrate the patterns (ontology-bound enums via `meaning`, a dynamic
+  `reachable_from` enum, accession + numeric fields). The full schema should be generated
+  from the cMD data dictionary CSV (the `*_ontology_term_id` columns become enum
+  `meaning`s) — see SPEC 060 and the `dict_to_linkml` tool noted there.
+license: MIT
+default_range: string
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  cmd: https://w3id.org/metacurator/cmd/
+  metacurator: https://w3id.org/metacurator/
+  NCIT: http://purl.obolibrary.org/obo/NCIT_
+  UBERON: http://purl.obolibrary.org/obo/UBERON_
+  NCBITaxon: http://purl.obolibrary.org/obo/NCBITaxon_
+
+default_prefix: cmd
+imports:
+  - linkml:types
+  - metacurator_core
+
+classes:
+  Sample:
+    is_a: CuratedRecord
+    description: One curatedMetagenomicData sample (one row of a *_sample.tsv).
+    slots:
+      - study_name
+      - sample_id
+      - subject_id
+      - ncbi_accession
+      - body_site
+      - disease
+      - sex
+      - country
+      - age
+      - age_unit
+      - bmi
+      - westernized
+      - host_species
+    slot_usage:
+      sample_id:
+        identifier: true
+
+slots:
+  study_name:
+    required: true
+  sample_id:
+    description: Sample identifier (often the BioSample accession in cMD).
+    required: true
+  subject_id:
+    required: true
+  ncbi_accession:
+    description: >-
+      Sequence-archive run accession(s) (SRR/ERR/DRR). Produced by `archive` (SPEC 030),
+      never by a model. May be multivalued.
+    multivalued: true
+  body_site:
+    description: Anatomical site of the sample; bound to UBERON.
+    range: BodySiteEnum
+  disease:
+    description: >-
+      Disease/condition. Dynamic enum: any NCIT term under the Disease/Disorder branch.
+      Validated by grounding (SPEC 070) against the configured ontology backend.
+    range: DiseaseEnum
+  sex:
+    range: SexEnum
+  country:
+    description: Country of origin; bound to NCIT geographic terms.
+    range: CountryEnum
+  age:
+    description: Age value (numeric).
+    range: float
+  age_unit:
+    range: AgeUnitEnum
+  bmi:
+    description: Body mass index (numeric).
+    range: float
+  westernized:
+    range: YesNoEnum
+  host_species:
+    range: HostSpeciesEnum
+
+enums:
+  BodySiteEnum:
+    description: >-
+      Body site, bound to UBERON. The `meaning`s below are VERIFIED against real cMD
+      curated data (the most frequent body sites). The complete permissible set should be
+      generated from the cMD data dictionary (`body_site_ontology_term_id`) — see SPEC
+      060 — rather than hand-extended by memory (ADR-0004).
+    permissible_values:
+      feces:
+        meaning: UBERON:0001988
+      oral cavity:
+        meaning: UBERON:0000167
+      skin epidermis:
+        meaning: UBERON:0001003
+      vagina:
+        meaning: UBERON:0000996
+      nasal cavity:
+        meaning: UBERON:0001707
+      milk:
+        meaning: UBERON:0001913
+
+  DiseaseEnum:
+    description: >-
+      Any disease in the NCIT Disease, Disorder or Finding branch. A dynamic enum — the
+      permissible set is defined by ontology reachability, not enumerated here. The
+      grounding backend (SPEC 070) checks membership via a recursive-CTE closure over
+      `edges`. `Healthy` is included explicitly as the cMD convention for no disease.
+    include:
+      - reachable_from:
+          source_ontology: obo:ncit
+          source_nodes:
+            - NCIT:C2991   # Disease or Disorder (root — CONFIRM against NCIT before relying on it)
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
+    permissible_values:
+      Healthy:
+        meaning: NCIT:C115935
+
+  CountryEnum:
+    description: >-
+      Country of origin, bound to NCIT. ILLUSTRATIVE — the authoritative value→CURIE
+      mapping must be generated from the cMD data dictionary (SPEC 060), not hand-typed.
+      No `meaning`s are asserted here to avoid shipping unverified CURIEs (ADR-0004);
+      the generator fills them from the dictionary's `country_ontology_term_id` column.
+    permissible_values:
+      Italy:
+      United States:
+      Japan:
+
+  AgeUnitEnum:
+    description: >-
+      Age unit. No `meaning`s asserted — cMD's age_unit has no ontology term id column, so
+      binding CURIEs here would be unverified (ADR-0004).
+    permissible_values:
+      Year:
+      Month:
+      Day:
+
+  HostSpeciesEnum:
+    permissible_values:
+      Homo sapiens:
+        meaning: NCBITaxon:9606

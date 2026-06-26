@@ -1,0 +1,49 @@
+id: https://w3id.org/metacurator/core
+name: metacurator_core
+title: metacurator core
+description: >-
+  Shared LinkML building blocks for metacurator curation schemas: common prefixes,
+  reusable ontology-bound enums, and a base record class. Concrete target standards
+  (e.g. cmd) import this. Compiles to Pydantic + JSON Schema (see ADR-0003); the
+  ontology bindings (enum `meaning`s and dynamic `reachable_from` enums) are validated
+  by the grounding backend (SPEC 070), not only by OAK.
+license: MIT
+default_range: string
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  metacurator: https://w3id.org/metacurator/
+  NCIT: http://purl.obolibrary.org/obo/NCIT_
+  UBERON: http://purl.obolibrary.org/obo/UBERON_
+  NCBITaxon: http://purl.obolibrary.org/obo/NCBITaxon_
+  HANCESTRO: http://purl.obolibrary.org/obo/HANCESTRO_
+
+default_prefix: metacurator
+imports:
+  - linkml:types
+
+classes:
+  CuratedRecord:
+    abstract: true
+    description: >-
+      Base for a single curated record (e.g. one sample). Concrete schemas add the
+      domain slots. Per-field provenance is tracked out-of-band in the framework
+      contracts (SPEC 010), not as record slots.
+
+enums:
+  SexEnum:
+    description: Biological sex, bound to NCIT (verified against cMD curated data).
+    permissible_values:
+      Female:
+        meaning: NCIT:C16576
+      Male:
+        meaning: NCIT:C20197
+
+  YesNoEnum:
+    description: >-
+      A simple yes/no. No `meaning`s are asserted: in cMD the fields using this (e.g.
+      westernized) carry no ontology term id, so binding CURIEs here would be unverified
+      (ADR-0004). A schema that grounds yes/no should add verified meanings.
+    permissible_values:
+      "Yes":
+      "No":

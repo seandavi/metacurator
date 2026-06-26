@@ -1,0 +1,55 @@
+[project]
+name = "metacurator"
+version = "0.0.1"
+description = "Spec-first toolkit for reproducing curated sample-level metadata from publications, with ontology grounding and a no-hallucination contract."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Sean Davis", email = "seandavi@gmail.com" }]
+requires-python = ">=3.11"
+keywords = ["curation", "metadata", "ontology", "linkml", "bioinformatics", "metagenomics"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+# Base install is deliberately light: the deterministic spine + schema runtime.
+# Heavy/optional capabilities live behind extras so the core stays installable
+# anywhere (see ADR-0004, ADR-0005).
+dependencies = [
+    "pydantic>=2.7",
+    "linkml-runtime>=1.7",   # load the LinkML schema + enums at runtime
+    "httpx>=0.27",           # resolve / acquire / archive HTTP
+    "duckdb>=1.1",           # table loading + local ontology grounding backend
+    "typer>=0.12",           # CLI
+]
+
+[project.optional-dependencies]
+mcp = ["fastmcp>=2.0"]                 # streamable-HTTP tool server (ADR-0006)
+schema = ["linkml>=1.7"]               # codegen: LinkML -> Pydantic + JSON Schema
+tables = ["openpyxl>=3.1", "python-docx>=1.1", "pdfplumber>=0.11"]  # supplement parsers
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+metacurator = "metacurator.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/seandavi/metacurator"
+Documentation = "https://github.com/seandavi/metacurator/tree/main/docs"
+Issues = "https://github.com/seandavi/metacurator/issues"
+
+[build-system]
+requires = ["uv_build>=0.4"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
