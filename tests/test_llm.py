@@ -23,6 +23,13 @@ def test_make_client_vertex():
     assert desc["model"] == "gemini-2.5-pro"
 
 
+def test_vertex_default_location_is_global(monkeypatch):
+    monkeypatch.delenv("GOOGLE_CLOUD_LOCATION", raising=False)
+    client = make_client("vertex:gemini-3.1-flash-lite")
+    assert client.location == "global"
+    assert client.describe()["params"]["location"] == "global"
+
+
 def test_make_client_unknown_provider():
     with pytest.raises(ValueError, match="unknown model provider"):
         make_client("acme:model-x")

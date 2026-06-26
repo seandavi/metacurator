@@ -157,7 +157,7 @@ def archive(
 @app.command()
 def run(
     pmid: str = typer.Argument(..., help="PubMed ID of the study to curate"),
-    model: str = typer.Option("vertex:gemini-2.5-pro", "--model", help="provider:model"),
+    model: str = typer.Option("vertex:gemini-3.1-flash-lite", "--model", help="provider:model"),
     dest: str = typer.Option("./bronze", "--dest", help="where to save fetched supplements"),
     cache: str = typer.Option(None, "--cache-dir", help="ontology store cache dir"),
     schema: str = typer.Option(None, "--schema", help="LinkML schema (default cmd)"),
