@@ -14,7 +14,7 @@ from typing import Any
 
 from .base import structured
 
-_DEFAULT_LOCATION = "us-central1"
+_DEFAULT_LOCATION = "global"
 
 
 def to_gemini_schema(schema: dict[str, Any]) -> dict[str, Any]:

@@ -12,12 +12,12 @@ What is real here:
   curator's ``disease_ontology_term_id`` column — an independent reproduction of the
   ontology mapping.
 
-Verified result (real run, Vertex ``gemini-2.5-pro`` doing classify + propose_mapping):
-the model independently produced the full 13-field column mapping, and metacurator's NCIT
-grounding matched the curator's ``disease_ontology_term_id`` on **110/110** rows
-("Colorectal Carcinoma" -> NCIT:C2955, branch-checked under NCIT:C2991; "Healthy" ->
-NCIT:C115935). Overall verdict PARTIAL (honest age/age_unit coverage gaps). With
-``--model`` omitted the agent supplies the same judgment offline.
+Verified result (real run, Vertex ``gemini-3.1-flash-lite`` at ``global`` doing classify +
+propose_mapping): the model independently produced the full 13-field column mapping, and
+metacurator's NCIT grounding matched the curator's ``disease_ontology_term_id`` on
+**110/110** rows ("Colorectal Carcinoma" -> NCIT:C2955, branch-checked under NCIT:C2991;
+"Healthy" -> NCIT:C115935). Overall verdict PARTIAL (honest age/age_unit coverage gaps).
+With ``--model`` omitted the agent supplies the same judgment offline.
 
 What is a stand-in (only when ``--model`` is omitted):
 - The ``judge`` steps need a model; without one we let the *agent* supply the table choice
@@ -33,10 +33,10 @@ Usage:
         --curated ../curatedMetagenomicDataCuration/inst/curated --cache /path/to/cache
 
     # real model judgment via Vertex (needs the [vertex] extra + GCP ADC):
-    GOOGLE_CLOUD_PROJECT=... GOOGLE_CLOUD_LOCATION=us-central1 \
+    GOOGLE_CLOUD_PROJECT=... \
     uv run python examples/reproduce_vogtmann.py \
         --curated ../curatedMetagenomicDataCuration/inst/curated --cache /path/to/cache \
-        --model vertex:gemini-2.5-pro
+        --model vertex:gemini-3.1-flash-lite
 """
 
 from __future__ import annotations

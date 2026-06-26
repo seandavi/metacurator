@@ -19,7 +19,7 @@ every run **reproducible** (the model is recorded in provenance).
   dict) -> dict`. An adapter additionally exposes:
   - `describe() -> dict` — `{provider, model, version|None, params}` for provenance.
 - **`make_client(spec: str, **opts) -> LLMClient`** — `spec` is `"provider:model"`, e.g.
-  `"vertex:gemini-2.5-pro"`. Unknown provider → `ValueError`; a missing provider extra →
+  `"vertex:gemini-3.1-flash-lite"`. Unknown provider → `ValueError`; a missing provider extra →
   an `ImportError` naming the extra to install.
 - **`structured(call, schema, *, retries=2) -> dict`** — the shared validate-and-retry
   wrapper: run `call()`, parse JSON, check it against `schema`; on failure re-ask with the
@@ -37,8 +37,8 @@ every run **reproducible** (the model is recorded in provenance).
   dict into `TableChoice` / `ColumnMapping` / `DisambiguationChoice` and enforces the
   no-mint rules — SPEC 100).
 - **Determinism knobs**: judgment defaults to `temperature=0`; `make_client` accepts
-  overrides. Auth is out-of-band: Vertex uses ADC (`GOOGLE_CLOUD_PROJECT` /
-  `GOOGLE_CLOUD_LOCATION`); no secrets in code or the schema.
+  overrides. Auth is out-of-band: Vertex uses ADC (`GOOGLE_CLOUD_PROJECT`; location defaults
+  to `global`, overridable via `GOOGLE_CLOUD_LOCATION` or `location=`); no secrets in code.
 - **Provenance**: the pipeline records `llm.describe()` in the `CurationReport` provenance
   so a run names the exact model.
 
@@ -59,7 +59,7 @@ every run **reproducible** (the model is recorded in provenance).
 
 ## Test cases (offline; the provider SDK call is mocked)
 
-- `make_client("vertex:gemini-2.5-pro")` returns a client whose `describe()` reports the
+- `make_client("vertex:gemini-3.1-flash-lite")` returns a client whose `describe()` reports the
   provider + model; an unknown provider raises `ValueError`.
 - `structured()` retries on a first invalid (non-JSON) response and succeeds on a valid
   retry; raises `LLMContractError` after exhausting retries.
