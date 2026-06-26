@@ -1,10 +1,13 @@
-"""pipeline + report tests (SPEC 110 / 090) — end-to-end offline, LLM mocked."""
+"""pipeline + report tests (SPEC 110 / 090) — end-to-end offline, LLM mocked.
+
+Runs against the synthetic test schema (the ``tdict`` fixture), so it doesn't depend on the
+shipped cmd schema's field names or bindings.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
-from metacurator.dictionary import Dictionary
 from metacurator.models import SourceProvenance, SourceTable, StudyRef, Verdict
 from metacurator.pipeline import curate_many, curate_study
 from metacurator.report import column_status, render_markdown, to_sidecar
@@ -40,58 +43,58 @@ def _table(columns, records, **prov) -> SourceTable:
     )
 
 
-STUDY = StudyRef(pmid="27171425", bioproject="PRJEB12449", title="Vogtmann 2016")
+STUDY = StudyRef(pmid="1", title="Synthetic study")
 
 MAPPING = [
-    {"source_col": "ID", "target_field": "sample_id", "confidence": 0.99},
-    {"source_col": "Subject", "target_field": "subject_id", "confidence": 0.99},
-    {"source_col": "Study", "target_field": "study_name", "confidence": 0.99},
-    {"source_col": "Sex", "target_field": "sex", "confidence": 0.9},
-    {"source_col": "Site", "target_field": "body_site", "confidence": 0.9},
+    {"source_col": "ID", "target_field": "record_id", "confidence": 0.99},
+    {"source_col": "Grp", "target_field": "group", "confidence": 0.99},
+    {"source_col": "Status", "target_field": "status", "confidence": 0.9},
+    {"source_col": "Site", "target_field": "site", "confidence": 0.9},
+    {"source_col": "Cond", "target_field": "condition", "confidence": 0.9},
 ]
 
 
 def _source_table():
     return _table(
-        ["ID", "Subject", "Study", "Sex", "Site"],
+        ["ID", "Grp", "Status", "Site", "Cond"],
         [
-            {"ID": "s1", "Subject": "p1", "Study": "VogtmannE_2016",
-             "Sex": "Male", "Site": "feces"},
-            {"ID": "s2", "Subject": "p2", "Study": "VogtmannE_2016",
-             "Sex": "Female", "Site": "feces"},
+            {"ID": "r1", "Grp": "g1", "Status": "Case",
+             "Site": "feces", "Cond": "Colorectal Carcinoma"},
+            {"ID": "r2", "Grp": "g2", "Status": "Control",
+             "Site": "feces", "Cond": "Healthy"},
         ],
         sheet="samples",
     )
 
 
-def test_curate_study_clean_pass(backend):
-    dictionary = Dictionary()
+def test_curate_study_clean_pass(tdict, backend):
     llm = ScriptedLLM(table_index=0, mapping_items=MAPPING)
     reference = [
-        {"sample_id": "s1", "sex": "Male", "body_site": "feces"},
-        {"sample_id": "s2", "sex": "Female", "body_site": "feces"},
+        {"record_id": "r1", "status": "Case", "site": "feces"},
+        {"record_id": "r2", "status": "Control", "site": "feces"},
     ]
     report = curate_study(
-        STUDY, dictionary=dictionary, llm=llm, backend=backend,
-        tables=[_source_table()], reference=reference,
+        STUDY, dictionary=tdict, llm=llm, backend=backend,
+        tables=[_source_table()], reference=reference, key="record_id",
     )
     assert report.provenance["overall_verdict"] == Verdict.PASS.value
     assert report.provenance["needs_review"] is False
-    sex = next(d for d in report.diffs if d.column == "sex")
-    assert sex.match == 2 and sex.verdict == Verdict.PASS
+    status = next(d for d in report.diffs if d.column == "status")
+    assert status.match == 2 and status.verdict == Verdict.PASS
     assert report.provenance["chosen_source"] == "supp.xlsx#samples"
+    # condition grounded against NCIT (Colorectal Carcinoma -> C2955; Healthy is permissible).
+    assert report.provenance["grounded"].get("0.condition") == "NCIT:C2955"
 
 
-def test_curate_study_conflict_is_fail(backend):
-    dictionary = Dictionary()
+def test_curate_study_conflict_is_fail(tdict, backend):
     llm = ScriptedLLM(table_index=0, mapping_items=MAPPING)
     reference = [
-        {"sample_id": "s1", "sex": "Female"},  # conflicts with candidate Male
-        {"sample_id": "s2", "sex": "Female"},
+        {"record_id": "r1", "status": "Control"},  # conflicts with candidate Case
+        {"record_id": "r2", "status": "Control"},
     ]
     report = curate_study(
-        STUDY, dictionary=dictionary, llm=llm, backend=backend,
-        tables=[_source_table()], reference=reference,
+        STUDY, dictionary=tdict, llm=llm, backend=backend,
+        tables=[_source_table()], reference=reference, key="record_id",
     )
     assert report.provenance["overall_verdict"] == Verdict.FAIL.value
     assert report.provenance["needs_review"] is True
@@ -99,44 +102,29 @@ def test_curate_study_conflict_is_fail(backend):
     assert "CONFLICT" in md and "**FAIL**" in md
 
 
-def test_disambiguate_not_called_for_single_auto(backend):
-    """Grounding 'feces' yields a single auto term -> no judgment call (SPEC 110)."""
-    dictionary = Dictionary()
+def test_disambiguate_not_called_for_single_auto(tdict, backend):
+    """'Colorectal Carcinoma' is a single auto NCIT term -> no judgment call (SPEC 110)."""
     llm = ScriptedLLM(table_index=0, mapping_items=MAPPING)
-    # body_site 'feces' grounds to a single auto UBERON term in the fixture store...
-    # but body_site is a *static* enum here; use disease (dynamic) to exercise grounding.
-    table = _table(
-        ["ID", "Subject", "Study", "Disease"],
-        [{"ID": "s1", "Subject": "p1", "Study": "X", "Disease": "Colorectal Carcinoma"}],
-        sheet="s",
+    report = curate_study(
+        STUDY, dictionary=tdict, llm=llm, backend=backend, tables=[_source_table()]
     )
-    mapping = [
-        {"source_col": "ID", "target_field": "sample_id", "confidence": 1.0},
-        {"source_col": "Subject", "target_field": "subject_id", "confidence": 1.0},
-        {"source_col": "Study", "target_field": "study_name", "confidence": 1.0},
-        {"source_col": "Disease", "target_field": "disease", "confidence": 1.0},
-    ]
-    llm.mapping_items = mapping
-    report = curate_study(STUDY, dictionary=dictionary, llm=llm, backend=backend, tables=[table])
-    # 'Colorectal Carcinoma' is a single auto term under the disease branch -> grounded.
-    assert report.provenance["grounded"].get("0.disease") == "NCIT:C2955"
+    assert report.provenance["grounded"].get("0.condition") == "NCIT:C2955"
     assert llm.disambiguate_calls == 0
 
 
-def test_curate_many_isolates_failure(backend):
-    dictionary = Dictionary()
+def test_curate_many_isolates_failure(tdict, backend):
     llm = ScriptedLLM(table_index=0, mapping_items=MAPPING)
     good = _source_table()
 
     def acquire(study):
         if study.pmid == "boom":
             raise RuntimeError("acquire exploded")
-        return ["ignored"]  # load_tables_fn replaced below
+        return ["ignored"]
 
     reports = curate_many(
         [StudyRef(pmid="ok"), StudyRef(pmid="boom")],
-        dictionary=dictionary, llm=llm, backend=backend,
-        acquire_fn=acquire, load_tables_fn=lambda _p: [good],
+        dictionary=tdict, llm=llm, backend=backend,
+        acquire_fn=acquire, load_tables_fn=lambda _p: [good], key="record_id",
     )
     assert len(reports) == 2
     ok, boom = reports
@@ -145,14 +133,13 @@ def test_curate_many_isolates_failure(backend):
     assert "acquire exploded" in boom.notes
 
 
-def test_report_sidecar_roundtrip(backend):
-    dictionary = Dictionary()
+def test_report_sidecar_roundtrip(tdict, backend):
     llm = ScriptedLLM(table_index=0, mapping_items=MAPPING)
     report = curate_study(
-        STUDY, dictionary=dictionary, llm=llm, backend=backend, tables=[_source_table()]
+        STUDY, dictionary=tdict, llm=llm, backend=backend, tables=[_source_table()]
     )
     side = to_sidecar(report)
-    assert side["study"]["pmid"] == "27171425"
+    assert side["study"]["pmid"] == "1"
     assert side["provenance"]["overall_verdict"] in {"PASS", "PARTIAL", "FAIL"}
 
 

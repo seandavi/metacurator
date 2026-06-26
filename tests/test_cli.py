@@ -18,19 +18,19 @@ def test_version():
     assert result.stdout.strip() == metacurator.__version__
 
 
-def test_dictionary_json():
-    result = runner.invoke(app, ["dictionary", "--json"])
+def test_dictionary_json(test_schema_path):
+    result = runner.invoke(app, ["dictionary", "--schema", str(test_schema_path), "--json"])
     assert result.exit_code == 0
     fields = json.loads(result.stdout)
-    assert "sample_id" in fields
-    assert fields["age"]["range"] == "float"
-    assert fields["disease"]["binding"] == "NCIT:C7057"
+    assert "record_id" in fields
+    assert fields["score"]["range"] == "float"
+    assert fields["site"]["binding"] == "UBERON:0001062"
 
 
-def test_dictionary_human():
-    result = runner.invoke(app, ["dictionary"])
+def test_dictionary_human(test_schema_path):
+    result = runner.invoke(app, ["dictionary", "--schema", str(test_schema_path)])
     assert result.exit_code == 0
-    assert "identifier=sample_id" in result.stdout
+    assert "identifier=record_id" in result.stdout
 
 
 def _write(tmp_path, name, text):

@@ -1,17 +1,24 @@
 """Shared offline test fixtures.
 
-A tiny ontology store (UBERON + NCIT) mirroring the bindings in ``schema/cmd.yaml``,
-built directly into the four-table store shape (SPEC 070) so grounding tests run with no
-network and no downloaded ``.db.gz``.
+A tiny ontology store (UBERON + NCIT) plus a synthetic ``test_schema.yaml``, so the
+generic dictionary/validation/pipeline tests exercise the contract without depending on the
+shipped cmd schema (cmd-specific assertions live in ``test_cmd_schema.py``). The store is
+built directly into the four-table shape (SPEC 070) — no network, no downloaded ``.db.gz``;
+its CURIEs match the synthetic schema's bindings.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import duckdb
 import pytest
 
+from metacurator.dictionary import Dictionary
 from metacurator.grounding._store import STORE_DDL, DuckStore
 from metacurator.grounding.local_duckdb import LocalDuckDBBackend
+
+TEST_SCHEMA = Path(__file__).parent / "fixtures" / "test_schema.yaml"
 
 # (ontology, curie, label, definition, obsolete, replaced_by)
 FIXTURE_TERMS = [
@@ -73,6 +80,18 @@ def backend(tmp_path) -> LocalDuckDBBackend:
     b = LocalDuckDBBackend(cache_dir=tmp_path)
     _insert(b.con)
     return b
+
+
+@pytest.fixture
+def test_schema_path() -> Path:
+    """Path to the synthetic test schema (for tools that take a --schema path)."""
+    return TEST_SCHEMA
+
+
+@pytest.fixture
+def tdict() -> Dictionary:
+    """The synthetic TestRecord schema — exercises the dictionary contract, not cmd."""
+    return Dictionary(TEST_SCHEMA, class_name="TestRecord")
 
 
 @pytest.fixture

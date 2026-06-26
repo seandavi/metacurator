@@ -78,17 +78,37 @@ class FieldSpec:
 
 
 class Dictionary:
-    """Loaded curation schema for one record class (default ``Sample``). See SPEC 060."""
+    """Loaded curation schema for one record class. See SPEC 060.
 
-    def __init__(self, path: Path | str | None = None, *, class_name: str = "Sample") -> None:
+    ``class_name`` defaults to the schema's single concrete (non-abstract) class — so the
+    toolkit is schema-pluggable, not tied to cmd's ``Sample``. If a schema has several
+    concrete classes, ``Sample`` is preferred when present, else pass ``class_name``.
+    """
+
+    def __init__(self, path: Path | str | None = None, *, class_name: str | None = None) -> None:
         self.path = Path(path) if path is not None else default_schema_path()
         if not self.path.exists():
             raise FileNotFoundError(f"schema not found: {self.path}")
         self.sv = SchemaView(str(self.path))
-        if class_name not in self.sv.all_classes():
+        if class_name is None:
+            class_name = self._default_class()
+        elif class_name not in self.sv.all_classes():
             raise KeyError(f"class {class_name!r} not in schema {self.path}")
         self.class_name = class_name
         self._fields: dict[str, FieldSpec] = self._build_fields()
+
+    def _default_class(self) -> str:
+        concrete = [
+            name for name, c in self.sv.all_classes().items() if not getattr(c, "abstract", False)
+        ]
+        if "Sample" in concrete:
+            return "Sample"
+        if len(concrete) == 1:
+            return concrete[0]
+        raise ValueError(
+            f"schema {self.path} has {len(concrete)} concrete classes {concrete}; "
+            "pass class_name= to choose one"
+        )
 
     # -- construction -----------------------------------------------------------
     def _build_fields(self) -> dict[str, FieldSpec]:

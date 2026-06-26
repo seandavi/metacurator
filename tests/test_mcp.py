@@ -41,12 +41,12 @@ async def test_diff_tool_roundtrips_typed_object():
     assert sex["mismatch"] == 1
 
 
-async def test_dictionary_tool():
+async def test_dictionary_tool(test_schema_path):
     server = build_server()
-    res = await server.call_tool("dictionary_fields", {})
+    res = await server.call_tool("dictionary_fields", {"schema_path": str(test_schema_path)})
     data = res.structured_content
-    assert data["identifier"] == "sample_id"
-    assert data["fields"]["disease"]["binding"]["branch_root"] == "NCIT:C7057"
+    assert data["identifier"] == "record_id"
+    assert data["fields"]["site"]["binding"]["branch_root"] == "UBERON:0001062"
 
 
 async def test_render_report_tool():
