@@ -11,13 +11,13 @@ no curated values. No identifier is ever minted by a model.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class OAStatus(str, Enum):
+class OAStatus(StrEnum):
     oa = "oa"
     not_oa = "not_oa"
     unknown = "unknown"
@@ -84,7 +84,7 @@ class ColumnMapping(BaseModel):
     needs_review: bool = False
 
 
-class Scope(str, Enum):
+class Scope(StrEnum):
     exact = "exact"
     broad = "broad"
     narrow = "narrow"
@@ -92,7 +92,7 @@ class Scope(str, Enum):
     label = "label"
 
 
-class ConfidenceTier(str, Enum):
+class ConfidenceTier(StrEnum):
     auto = "auto"
     review = "review"
     none = "none"
@@ -123,7 +123,7 @@ class CandidateRow(BaseModel):
     provenance: dict[str, str] = Field(default_factory=dict)
 
 
-class Verdict(str, Enum):
+class Verdict(StrEnum):
     PASS = "PASS"
     PARTIAL = "PARTIAL"
     FAIL = "FAIL"
