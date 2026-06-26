@@ -18,8 +18,12 @@ ontology term id), we ground the label against real NCIT under the schema's dise
 Multi-disease rows (a value with several CURIEs) are skipped and counted separately — the
 point here is breadth of single-term grounding, not compound parsing.
 
+Works for any dynamic-enum field (``--field disease|body_site|country``); the curated
+ground truth is the matching ``<field>_ontology_term_id`` column, and the ontology + branch
+root come from the schema binding.
+
 Usage:
-    uv run python examples/grounding_audit.py \
+    uv run python examples/grounding_audit.py --field disease \
         --curated ../curatedMetagenomicDataCuration/inst/curated --cache /path/to/cache
 """
 
@@ -40,8 +44,9 @@ _MULTI = re.compile(r"[;,]")
 _SENTINELS = {"", "not applicable", "na", "n/a", "unknown", "control"}
 
 
-def collect_pairs(curated_dir: Path) -> tuple[Counter, int]:
-    """Counter of (label, curated_curie) for single-disease rows; + #multi rows skipped."""
+def collect_pairs(curated_dir: Path, field: str) -> tuple[Counter, int]:
+    """Counter of (label, curated_curie) for single-value rows; + #multi rows skipped."""
+    term_col = f"{field}_ontology_term_id"
     pairs: Counter = Counter()
     multi = 0
     for sub in sorted(p for p in curated_dir.iterdir() if p.is_dir()):
@@ -50,8 +55,8 @@ def collect_pairs(curated_dir: Path) -> tuple[Counter, int]:
             continue
         with open(tsv, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f, delimiter="\t"):
-                label = (row.get("disease") or "").strip()
-                curie = (row.get("disease_ontology_term_id") or "").strip()
+                label = (row.get(field) or "").strip()
+                curie = (row.get(term_col) or "").strip()
                 if not label or label.casefold() in _SENTINELS:
                     continue
                 curies = [c for c in _MULTI.split(curie) if c.strip()]
@@ -62,13 +67,12 @@ def collect_pairs(curated_dir: Path) -> tuple[Counter, int]:
     return pairs, multi
 
 
-def classify(label, curie, *, dictionary, backend, branch_root):
-    pv = dictionary.field("disease").permissible_values
-    if label in pv:
-        return "SCHEMA-PV", pv[label]
-    if not curie.startswith("NCIT:"):
+def classify(label, curie, *, field_spec, backend, ontology, branch_root, prefix):
+    if label in field_spec.permissible_values:
+        return "SCHEMA-PV", field_spec.permissible_values[label]
+    if not curie.startswith(f"{prefix}:"):
         return "CROSS-ONTO", ""
-    terms = ground(label, "ncit", backend=backend, branch_root=branch_root)
+    terms = ground(label, ontology, backend=backend, branch_root=branch_root)
     autos = [t for t in terms if t.confidence_tier == ConfidenceTier.auto]
     if autos:
         mc = autos[0].curie
@@ -80,27 +84,35 @@ def classify(label, curie, *, dictionary, backend, branch_root):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--field", default="disease", help="disease | body_site | country")
     ap.add_argument("--curated", required=True)
     ap.add_argument("--cache", required=True)
     ap.add_argument("--examples", type=int, default=12, help="examples to show per category")
     args = ap.parse_args()
 
     dictionary = Dictionary()
-    branch_root = dictionary.field("disease").binding.branch_root
+    field_spec = dictionary.field(args.field)
+    binding = field_spec.binding
+    if binding is None:
+        ap.error(f"field {args.field!r} is not a dynamic (grounded) enum")
+    ontology = binding.ontology
+    prefix = {"ncit": "NCIT", "uberon": "UBERON"}.get(ontology, ontology.upper())
     backend = LocalDuckDBBackend(cache_dir=Path(args.cache))
-    print("ensuring NCIT ...")
-    backend.ensure(["ncit"])
+    print(f"field={args.field} ontology={ontology} branch_root={binding.branch_root}")
+    print(f"ensuring {ontology} ...")
+    backend.ensure([ontology])
 
-    pairs, multi = collect_pairs(Path(args.curated))
-    print(f"\n{len(pairs)} distinct single-disease (label, curie) pairs; "
-          f"{multi} multi-disease rows skipped\n")
+    pairs, multi = collect_pairs(Path(args.curated), args.field)
+    print(f"\n{len(pairs)} distinct single-value (label, curie) pairs; "
+          f"{multi} multi-value rows skipped\n")
 
     categories = ("AGREE", "DISAGREE", "REVIEW", "NO-MATCH", "CROSS-ONTO", "SCHEMA-PV")
     buckets: dict[str, list] = {k: [] for k in categories}
     row_coverage: Counter = Counter()
     for (label, curie), n in pairs.most_common():
         cat, mc = classify(
-            label, curie, dictionary=dictionary, backend=backend, branch_root=branch_root
+            label, curie, field_spec=field_spec, backend=backend,
+            ontology=ontology, branch_root=binding.branch_root, prefix=prefix,
         )
         buckets[cat].append((label, curie, mc, n))
         row_coverage[cat] += n

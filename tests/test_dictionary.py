@@ -29,10 +29,22 @@ def test_load_cmd_fields(cmd):
 
 
 def test_static_enum_permissible_values(cmd):
+    # sex remains a static enum with verified meanings.
+    sex = cmd.field("sex")
+    assert sex.is_enum is True
+    assert sex.is_dynamic_enum is False
+    assert sex.permissible_values["Male"] == "NCIT:C20197"
+
+
+def test_body_site_and_country_are_dynamic(cmd):
     body = cmd.field("body_site")
-    assert body.is_enum is True
-    assert body.is_dynamic_enum is False
-    assert body.permissible_values["feces"] == "UBERON:0001988"
+    assert body.is_dynamic_enum is True
+    assert body.binding.ontology == "uberon"
+    assert body.binding.branch_root == "UBERON:0001062"
+    country = cmd.field("country")
+    assert country.is_dynamic_enum is True
+    assert country.binding.ontology == "ncit"
+    assert country.binding.branch_root == "NCIT:C25464"
 
 
 def test_dynamic_enum_binding(cmd):
@@ -59,14 +71,30 @@ def test_validate_mapping_ok(cmd):
 
 
 def test_validate_row_static_enum_reject(cmd):
-    row = CandidateRow(key="s1", values={"body_site": "spleen"})
+    row = CandidateRow(key="s1", values={"sex": "spleen"})  # not a SexEnum value
     errors = cmd.validate_row(row)
-    assert len(errors) == 1 and "body_site" in errors[0]
+    assert len(errors) == 1 and "sex" in errors[0]
 
 
 def test_validate_row_static_enum_accept(cmd):
-    row = CandidateRow(key="s1", values={"body_site": "feces", "sex": "Male"})
+    row = CandidateRow(key="s1", values={"sex": "Male", "age_unit": "Year"})
     assert cmd.validate_row(row) == []
+
+
+def test_validate_row_body_site_grounds_to_uberon(cmd, backend):
+    # 'feces' grounds under UBERON anatomical entity -> accepted; non-anatomical -> rejected.
+    ok = cmd.validate_row(CandidateRow(key="s1", values={"body_site": "feces"}), backend=backend)
+    assert ok == []
+    bad = cmd.validate_row(
+        CandidateRow(key="s1", values={"body_site": "United States"}), backend=backend
+    )
+    assert len(bad) == 1 and "UBERON:0001062" in bad[0]
+
+
+def test_validate_row_country_grounds_to_ncit(cmd, backend):
+    assert cmd.validate_row(
+        CandidateRow(key="s1", values={"country": "United States"}), backend=backend
+    ) == []
 
 
 def test_validate_row_numeric(cmd):

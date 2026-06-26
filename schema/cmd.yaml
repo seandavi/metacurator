@@ -88,23 +88,20 @@ slots:
 enums:
   BodySiteEnum:
     description: >-
-      Body site, bound to UBERON. The `meaning`s below are VERIFIED against real cMD
-      curated data (the most frequent body sites). The complete permissible set should be
-      generated from the cMD data dictionary (`body_site_ontology_term_id`) — see SPEC
-      060 — rather than hand-extended by memory (ADR-0004).
-    permissible_values:
-      feces:
-        meaning: UBERON:0001988
-      oral cavity:
-        meaning: UBERON:0000167
-      skin epidermis:
-        meaning: UBERON:0001003
-      vagina:
-        meaning: UBERON:0000996
-      nasal cavity:
-        meaning: UBERON:0001707
-      milk:
-        meaning: UBERON:0001913
+      Body site, bound to UBERON. A dynamic enum — any UBERON anatomical entity is
+      permissible; grounding (SPEC 070) verifies each value against UBERON rather than a
+      hand-maintained list (ADR-0004).
+    include:
+      - reachable_from:
+          source_ontology: obo:uberon
+          source_nodes:
+            # "anatomical entity" — VERIFIED against UBERON: the root that covers anatomical
+            # structures (vagina, epidermis), spaces (oral/nasal cavity), and organism
+            # substances (feces, milk) — i.e. every cMD body_site value.
+            - UBERON:0001062
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
 
   DiseaseEnum:
     description: >-
@@ -135,14 +132,19 @@ enums:
 
   CountryEnum:
     description: >-
-      Country of origin, bound to NCIT. ILLUSTRATIVE — the authoritative value→CURIE
-      mapping must be generated from the cMD data dictionary (SPEC 060), not hand-typed.
-      No `meaning`s are asserted here to avoid shipping unverified CURIEs (ADR-0004);
-      the generator fills them from the dictionary's `country_ontology_term_id` column.
-    permissible_values:
-      Italy:
-      United States:
-      Japan:
+      Country of origin, bound to NCIT. A dynamic enum — any NCIT country is permissible;
+      grounding (SPEC 070) verifies each value against NCIT rather than a hand-typed list
+      (ADR-0004), so no unverified CURIEs are shipped in the schema.
+    include:
+      - reachable_from:
+          source_ontology: obo:ncit
+          source_nodes:
+            # "Country" — VERIFIED against NCIT: the direct parent of every country term
+            # (United States C17234, China C16428, …).
+            - NCIT:C25464
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
 
   AgeUnitEnum:
     description: >-
