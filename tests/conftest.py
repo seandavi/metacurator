@@ -17,6 +17,7 @@ from metacurator.grounding.local_duckdb import LocalDuckDBBackend
 FIXTURE_TERMS = [
     ("uberon", "UBERON:0001988", "feces", None, False, None),
     ("uberon", "UBERON:0000167", "oral cavity", None, False, None),
+    ("uberon", "UBERON:0001062", "anatomical entity", None, False, None),  # body_site root
     # A second term sharing the "feces" label, to exercise ambiguity demotion.
     ("uberon", "UBERON:8888888", "feces", None, False, None),
     ("ncit", "NCIT:C7057", "Disease, Disorder or Finding", None, False, None),
@@ -24,7 +25,8 @@ FIXTURE_TERMS = [
     ("ncit", "NCIT:C9305", "Neoplasm", None, False, None),
     ("ncit", "NCIT:C2955", "Colorectal Carcinoma", None, False, None),
     ("ncit", "NCIT:C115935", "Healthy", None, False, None),
-    ("ncit", "NCIT:C17234", "United States", None, False, None),  # geographic, off-branch
+    ("ncit", "NCIT:C25464", "Country", None, False, None),  # country root
+    ("ncit", "NCIT:C17234", "United States", None, False, None),  # a country (off disease branch)
     ("ncit", "NCIT:C99999", "Obsolete Disease", None, True, "NCIT:C2955"),
     # Label-vs-synonym competition: 'Hypertension' is C3117's label but also an exact
     # synonym of C168203 ('Family History of Hypertension'). The label hit must win.
@@ -51,7 +53,11 @@ FIXTURE_EDGES = [
     ("ncit", "NCIT:C99999", "rdfs:subClassOf", "NCIT:C2991"),
     ("ncit", "NCIT:C3117", "rdfs:subClassOf", "NCIT:C7057"),  # Hypertension (a Finding)
     ("ncit", "NCIT:C168203", "rdfs:subClassOf", "NCIT:C7057"),
-    # C17234 (United States) and C115935 (Healthy) are deliberately NOT under C2991/C7057.
+    ("ncit", "NCIT:C17234", "rdfs:subClassOf", "NCIT:C25464"),  # United States under Country
+    ("uberon", "UBERON:0001988", "rdfs:subClassOf", "UBERON:0001062"),  # feces -> anatomical entity
+    ("uberon", "UBERON:0000167", "rdfs:subClassOf", "UBERON:0001062"),  # oral cavity
+    # C17234 is a country (under C25464) but deliberately NOT under the disease branch C7057;
+    # C115935 (Healthy) is under neither.
 ]
 
 
