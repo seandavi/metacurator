@@ -87,19 +87,29 @@ class LocalDuckDBBackend:
         safe_path = str(sqlite_db).replace("'", "''")
         con.execute(f"ATTACH '{safe_path}' AS semsql (TYPE sqlite, READ_ONLY)")
         try:
-            o = [ontology]
+            # Materialize just the statement slices we need (+ edges) into native DuckDB in
+            # one pass, so the term self-joins below don't rescan the attached SQLite — that
+            # matters for big ontologies (NCIT/NCBITaxon have millions of statements).
+            wanted = (_P_LABEL, _P_DEFINITION, _P_DEPRECATED, _P_REPLACED_BY, *_SYNONYM_SCOPES)
+            placeholders = ", ".join("?" for _ in wanted)
+            con.execute(
+                f"CREATE TEMP TABLE _st AS SELECT subject, predicate, object, value "  # noqa: S608
+                f"FROM semsql.statements WHERE predicate IN ({placeholders})",
+                list(wanted),
+            )
+            con.execute(
+                "CREATE TEMP TABLE _ed AS "
+                "SELECT subject, predicate, object FROM semsql.edge WHERE object IS NOT NULL"
+            )
             # terms: subjects carrying a label, with optional definition/deprecation/replacement.
             con.execute(
                 "INSERT INTO terms (ontology, curie, label, definition, obsolete, replaced_by) "
                 "SELECT ?, lbl.subject, MAX(lbl.value), MAX(dfn.value), "
                 "       COALESCE(MAX(dep.value) = 'true', FALSE), MAX(rep.object) "
-                "FROM semsql.statements lbl "
-                "LEFT JOIN semsql.statements dfn "
-                "  ON dfn.subject = lbl.subject AND dfn.predicate = ? "
-                "LEFT JOIN semsql.statements dep "
-                "  ON dep.subject = lbl.subject AND dep.predicate = ? "
-                "LEFT JOIN semsql.statements rep "
-                "  ON rep.subject = lbl.subject AND rep.predicate = ? "
+                "FROM _st lbl "
+                "LEFT JOIN _st dfn ON dfn.subject = lbl.subject AND dfn.predicate = ? "
+                "LEFT JOIN _st dep ON dep.subject = lbl.subject AND dep.predicate = ? "
+                "LEFT JOIN _st rep ON rep.subject = lbl.subject AND rep.predicate = ? "
                 "WHERE lbl.predicate = ? AND lbl.value IS NOT NULL "
                 "GROUP BY lbl.subject",
                 [ontology, _P_DEFINITION, _P_DEPRECATED, _P_REPLACED_BY, _P_LABEL],
@@ -108,17 +118,18 @@ class LocalDuckDBBackend:
             for pred, scope in _SYNONYM_SCOPES.items():
                 con.execute(
                     "INSERT INTO synonyms (ontology, curie, synonym, scope) "
-                    "SELECT ?, subject, value, ? FROM semsql.statements "
+                    "SELECT ?, subject, value, ? FROM _st "
                     "WHERE predicate = ? AND value IS NOT NULL",
                     [ontology, scope, pred],
                 )
-            # edges: asserted direct edges (the semsql `edge` view).
+            # edges: asserted direct edges (the semsql `edge` table).
             con.execute(
                 "INSERT INTO edges (ontology, subject, predicate, object) "
-                "SELECT ?, subject, predicate, object FROM semsql.edge "
-                "WHERE object IS NOT NULL",
-                o,
+                "SELECT ?, subject, predicate, object FROM _ed",
+                [ontology],
             )
+            con.execute("DROP TABLE _st")
+            con.execute("DROP TABLE _ed")
         finally:
             con.execute("DETACH semsql")
 

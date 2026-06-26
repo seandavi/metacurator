@@ -76,9 +76,11 @@ def ground_rows(
             terms = ground(
                 str(value), binding.ontology, backend=backend, branch_root=binding.branch_root
             )
-            autos = [t for t in terms if t.confidence_tier == ConfidenceTier.auto]
-            if len(autos) == 1:
-                grounded[f"{i}.{field}"] = autos[0].curie  # single auto: no judgment call
+            # Count *distinct* auto CURIEs: a value can hit one term via both its label and
+            # an exact synonym (common in NCIT), yielding two auto rows for one CURIE.
+            auto_curies = {t.curie for t in terms if t.confidence_tier == ConfidenceTier.auto}
+            if len(auto_curies) == 1:
+                grounded[f"{i}.{field}"] = next(iter(auto_curies))  # single auto: no judgment
                 continue
             reviews = [t for t in terms if t.confidence_tier == ConfidenceTier.review]
             if llm is not None and reviews:

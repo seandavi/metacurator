@@ -32,6 +32,9 @@ FIXTURE_SYNONYMS = [
     ("uberon", "UBERON:0001988", "stool", "exact"),
     ("uberon", "UBERON:0001988", "intestinal mass", "broad"),
     ("ncit", "NCIT:C2955", "Colorectal Cancer", "exact"),
+    # NCIT also lists a term's preferred name as an exact synonym, so a value can hit one
+    # CURIE via both label and synonym — grounding must collapse that to a single term.
+    ("ncit", "NCIT:C2955", "Colorectal Carcinoma", "exact"),
 ]
 
 # (ontology, subject, predicate, object)

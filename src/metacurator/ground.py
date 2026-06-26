@@ -14,6 +14,13 @@ from .models import ConfidenceTier, GroundedTerm, Scope
 # Scopes that count as an "exact" hit for auto-tier eligibility.
 _EXACT_SCOPES = (Scope.label, Scope.exact)
 
+# Scope authority for collapsing duplicate-CURIE hits (lower = more authoritative).
+_SCOPE_ORDER = {Scope.label: 0, Scope.exact: 1, Scope.narrow: 2, Scope.broad: 3, Scope.related: 4}
+
+
+def _scope_rank(scope: Scope | None) -> int:
+    return _SCOPE_ORDER.get(scope, 9)
+
 
 def ground(
     value: str,
@@ -65,6 +72,16 @@ def ground(
                 }
             )
         )
+
+    # Collapse rows that hit the same CURIE via more than one scope (e.g. a value that is
+    # both a term's label and one of its exact synonyms, as in NCIT), keeping the most
+    # authoritative scope — so one real term never looks like ambiguity downstream.
+    deduped: dict[str, GroundedTerm] = {}
+    for t in survivors:
+        prev = deduped.get(t.curie)
+        if prev is None or _scope_rank(t.scope) < _scope_rank(prev.scope):
+            deduped[t.curie] = t
+    survivors = list(deduped.values())
 
     # Identify auto-eligible: exact scope, in branch, not obsolete.
     auto_eligible = [
