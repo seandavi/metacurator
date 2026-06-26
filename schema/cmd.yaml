@@ -35,12 +35,19 @@ classes:
       - ncbi_accession
       - body_site
       - disease
+      - target_condition
       - sex
       - country
       - age
       - age_unit
+      - age_min
+      - age_max
+      - age_group
       - bmi
+      - ancestry
       - westernized
+      - antibiotics_current_use
+      - sequencing_platform
       - host_species
     slot_usage:
       sample_id:
@@ -67,6 +74,13 @@ slots:
       Disease/condition. Dynamic enum: any NCIT term under the Disease/Disorder branch.
       Validated by grounding (SPEC 070) against the configured ontology backend.
     range: DiseaseEnum
+  target_condition:
+    description: >-
+      The study's target condition (the phenotype it was designed to study). Deliberately a
+      free string, NOT an ontology-bound enum: a corpus audit showed cMD target_condition
+      values span multiple ontologies and concept kinds — NCIT disease/finding, NCIT
+      microbiome concepts ("Microbiome", "Intestinal Flora"), OHMI host-microbiome
+      interactions, and NCBITaxon organisms ("Prevotella copri") — so no single branch fits.
   sex:
     range: SexEnum
   country:
@@ -77,11 +91,28 @@ slots:
     range: float
   age_unit:
     range: AgeUnitEnum
+  age_min:
+    description: Lower bound of an age range (numeric).
+    range: float
+  age_max:
+    description: Upper bound of an age range (numeric).
+    range: float
+  age_group:
+    description: Age group; bound to the NCIT age-related-group branch.
+    range: AgeGroupEnum
   bmi:
     description: Body mass index (numeric).
     range: float
+  ancestry:
+    description: Genetic ancestry; bound to HANCESTRO.
+    range: AncestryEnum
   westernized:
     range: YesNoEnum
+  antibiotics_current_use:
+    description: Whether the subject is currently using antibiotics.
+    range: YesNoEnum
+  sequencing_platform:
+    range: SequencingPlatformEnum
   host_species:
     range: HostSpeciesEnum
 
@@ -159,3 +190,51 @@ enums:
     permissible_values:
       Homo sapiens:
         meaning: NCBITaxon:9606
+
+  AgeGroupEnum:
+    description: >-
+      Age group, bound to NCIT. A STATIC enum with verified meanings (not dynamic): an audit
+      showed the cMD labels (e.g. "Adult") collide with generic NCIT terms — "Adult" is the
+      primary label of NCIT:C17600 but cMD curates the age-group-specific NCIT:C49685 (which
+      carries "Adult" as a synonym), so reachability grounding picks the wrong term. The
+      meanings below are the curator's choices, VERIFIED against NCIT (each is under
+      NCIT:C20587 "Age Related Group").
+    permissible_values:
+      Newborn:
+        meaning: NCIT:C16731
+      Infant:
+        meaning: NCIT:C27956
+      Child:
+        meaning: NCIT:C49683
+      Adolescent:
+        meaning: NCIT:C27954
+      Adult:
+        meaning: NCIT:C49685
+      Elderly:
+        meaning: NCIT:C16268
+
+  AncestryEnum:
+    description: >-
+      Genetic ancestry — dynamic enum over the HANCESTRO "ancestry category" branch. Root
+      VERIFIED against HANCESTRO (covers European, African, Asian, Hispanic/Latin American,
+      …). HANCESTRO is available from semantic-sql, like NCIT/UBERON.
+    include:
+      - reachable_from:
+          source_ontology: obo:hancestro
+          source_nodes:
+            - HANCESTRO:0004
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
+
+  SequencingPlatformEnum:
+    description: >-
+      Sequencing platform. No `meaning`s asserted — cMD's sequencing_platform has no
+      ontology term id column, so binding CURIEs here would be unverified (ADR-0004).
+    permissible_values:
+      IlluminaHiSeq:
+      IlluminaNovaSeq:
+      IlluminaNextSeq:
+      IlluminaMiSeq:
+      IonProton:
+      BGISeq:
