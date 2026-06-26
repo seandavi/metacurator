@@ -116,11 +116,20 @@ enums:
       - reachable_from:
           source_ontology: obo:ncit
           source_nodes:
-            - NCIT:C2991   # Disease or Disorder (root — CONFIRM against NCIT before relying on it)
+            # "Disease, Disorder or Finding" — VERIFIED against NCIT: this is the root that
+            # covers both C2991 (Disease or Disorder; carcinomas, T2D, …) and C3367
+            # (Finding; hypertension, diarrhea, preterm birth, …). C2991 alone was too
+            # narrow — confirmed by a grounding audit over the cMD corpus.
+            - NCIT:C7057
           relationship_types:
             - rdfs:subClassOf
           is_direct: false
     permissible_values:
+      # 'Healthy' stays an explicit permissible value (NOT reached via the branch above)
+      # because NCIT correctly does not place "healthy" under Disease/Disorder/Finding —
+      # it is the *absence* of disease, modeled as NCIT:C115935 "Healthy" whose parent is
+      # C27992 "Disease Qualifier". So it cannot be subsumed by reachability; the explicit
+      # binding is the right representation and is still ontology-grounded (not free text).
       Healthy:
         meaning: NCIT:C115935
 

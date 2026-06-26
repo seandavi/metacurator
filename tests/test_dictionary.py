@@ -39,7 +39,7 @@ def test_dynamic_enum_binding(cmd):
     disease = cmd.field("disease")
     assert disease.is_dynamic_enum is True
     assert disease.binding.ontology == "ncit"
-    assert disease.binding.branch_root == "NCIT:C2991"
+    assert disease.binding.branch_root == "NCIT:C7057"
     assert "Healthy" in disease.permissible_values  # explicit permissible value
 
 
@@ -83,7 +83,7 @@ def test_validate_row_dynamic_enum_in_branch(cmd, backend):
 def test_validate_row_dynamic_enum_off_branch(cmd, backend):
     row = CandidateRow(key="s1", values={"disease": "United States"})
     errors = cmd.validate_row(row, backend=backend)
-    assert len(errors) == 1 and "NCIT:C2991" in errors[0]
+    assert len(errors) == 1 and "NCIT:C7057" in errors[0]
 
 
 def test_validate_row_dynamic_enum_healthy_permissible(cmd, backend):

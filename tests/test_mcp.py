@@ -46,7 +46,7 @@ async def test_dictionary_tool():
     res = await server.call_tool("dictionary_fields", {})
     data = res.structured_content
     assert data["identifier"] == "sample_id"
-    assert data["fields"]["disease"]["binding"]["branch_root"] == "NCIT:C2991"
+    assert data["fields"]["disease"]["binding"]["branch_root"] == "NCIT:C7057"
 
 
 async def test_render_report_tool():

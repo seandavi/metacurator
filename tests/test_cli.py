@@ -24,7 +24,7 @@ def test_dictionary_json():
     fields = json.loads(result.stdout)
     assert "sample_id" in fields
     assert fields["age"]["range"] == "float"
-    assert fields["disease"]["binding"] == "NCIT:C2991"
+    assert fields["disease"]["binding"] == "NCIT:C7057"
 
 
 def test_dictionary_human():

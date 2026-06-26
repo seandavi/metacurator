@@ -19,6 +19,7 @@ FIXTURE_TERMS = [
     ("uberon", "UBERON:0000167", "oral cavity", None, False, None),
     # A second term sharing the "feces" label, to exercise ambiguity demotion.
     ("uberon", "UBERON:8888888", "feces", None, False, None),
+    ("ncit", "NCIT:C7057", "Disease, Disorder or Finding", None, False, None),
     ("ncit", "NCIT:C2991", "Disease or Disorder", None, False, None),
     ("ncit", "NCIT:C9305", "Neoplasm", None, False, None),
     ("ncit", "NCIT:C2955", "Colorectal Carcinoma", None, False, None),
@@ -41,8 +42,9 @@ FIXTURE_SYNONYMS = [
 FIXTURE_EDGES = [
     ("ncit", "NCIT:C2955", "rdfs:subClassOf", "NCIT:C9305"),
     ("ncit", "NCIT:C9305", "rdfs:subClassOf", "NCIT:C2991"),
+    ("ncit", "NCIT:C2991", "rdfs:subClassOf", "NCIT:C7057"),  # under the broad root
     ("ncit", "NCIT:C99999", "rdfs:subClassOf", "NCIT:C2991"),
-    # C17234 (United States) and C115935 (Healthy) are deliberately NOT under C2991.
+    # C17234 (United States) and C115935 (Healthy) are deliberately NOT under C2991/C7057.
 ]
 
 
