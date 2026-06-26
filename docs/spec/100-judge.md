@@ -24,9 +24,10 @@ agents choose among / describe over deterministic results.
    is a `ColumnMapping` (SPEC 010) — a *description of how to project*, never values.
    The deterministic spine validates it against the schema (SPEC 060) and applies it.
 
-3. **`disambiguate(value: str, candidates: list[GroundedTerm]) -> Choice`**
+3. **`disambiguate(value: str, candidates: list[GroundedTerm]) -> DisambiguationChoice`**
    Choose among **real** grounded candidates produced by SPEC 070 (or decline). The
-   agent may only return one of the provided `curie`s or "none" — it cannot mint a CURIE.
+   agent may only return one of the provided `curie`s or `None` — it cannot mint a CURIE;
+   a returned CURIE outside the candidate set raises `JudgeContractError`.
 
 ## Invariants (the contract)
 

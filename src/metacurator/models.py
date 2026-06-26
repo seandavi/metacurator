@@ -84,6 +84,22 @@ class ColumnMapping(BaseModel):
     needs_review: bool = False
 
 
+class TableChoice(BaseModel):
+    """Agent output (SPEC 100): which loaded table is the per-subject table. No data."""
+
+    table_index: int
+    rationale: str = ""
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    needs_review: bool = False
+
+
+class DisambiguationChoice(BaseModel):
+    """Agent output (SPEC 100): one of the provided grounded CURIEs, or None. Cannot mint."""
+
+    curie: str | None = None
+    rationale: str = ""
+
+
 class Scope(StrEnum):
     exact = "exact"
     broad = "broad"
