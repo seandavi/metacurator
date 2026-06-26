@@ -83,20 +83,25 @@ def ground(
             deduped[t.curie] = t
     survivors = list(deduped.values())
 
-    # Identify auto-eligible: exact scope, in branch, not obsolete.
-    auto_eligible = [
-        t for t in survivors
-        if t.scope in _EXACT_SCOPES and t.branch_ok and not t.obsolete
-    ]
-    unique_auto = {t.curie for t in auto_eligible}
+    # Auto-tier selection, with a **label hit outranking synonym hits**. A value matching a
+    # term's primary label is a far stronger signal than matching a (longer) term's synonym,
+    # so synonym matches of *other* terms must not demote a clean label match to review
+    # (e.g. "Hypertension" -> C3117 by label, vs "Family History of Hypertension" by synonym).
+    def live(t: GroundedTerm) -> bool:
+        return t.branch_ok and not t.obsolete
+
+    label_curies = {t.curie for t in survivors if t.scope == Scope.label and live(t)}
+    if len(label_curies) == 1:
+        auto_curies = label_curies  # the single label match wins; synonyms are weaker
+    elif label_curies:
+        auto_curies = set()  # multiple distinct label matches -> genuine ambiguity
+    else:
+        exact_curies = {t.curie for t in survivors if t.scope == Scope.exact and live(t)}
+        auto_curies = exact_curies if len(exact_curies) == 1 else set()
 
     results: list[GroundedTerm] = []
     for t in survivors:
-        is_auto = (
-            t in auto_eligible
-            and len(unique_auto) == 1  # ambiguity (>1 distinct auto) demotes to review
-        )
-        if is_auto:
+        if t.curie in auto_curies and t.scope in _EXACT_SCOPES and live(t):
             tier = ConfidenceTier.auto
         elif t.obsolete:
             tier = ConfidenceTier.none  # deprecated terms are rejected; replaced_by surfaced
