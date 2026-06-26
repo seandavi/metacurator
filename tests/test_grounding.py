@@ -66,6 +66,18 @@ def test_ambiguous_exact_hits_demoted_to_review(backend):
     assert all(t.confidence_tier == ConfidenceTier.review for t in terms)
 
 
+def test_label_and_exact_synonym_collapse_to_one_auto(backend):
+    """A value that is both a term's label and an exact synonym -> one auto term, not two.
+
+    (Regression: real NCIT lists 'Colorectal Carcinoma' as both; the un-deduped result
+    looked like ambiguity and demoted to review.)
+    """
+    terms = ground("Colorectal Carcinoma", "ncit", backend=backend, branch_root=NCIT_DISEASE_ROOT)
+    assert len(terms) == 1
+    assert terms[0].curie == "NCIT:C2955"
+    assert terms[0].confidence_tier == ConfidenceTier.auto
+
+
 def test_no_hit_returns_empty(backend):
     assert ground("not a real value", "uberon", backend=backend) == []
 
