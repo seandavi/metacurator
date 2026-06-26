@@ -78,6 +78,21 @@ def test_label_and_exact_synonym_collapse_to_one_auto(backend):
     assert terms[0].confidence_tier == ConfidenceTier.auto
 
 
+def test_label_match_outranks_synonym_matches(backend):
+    """A clean label hit is auto even when other terms match the value as a synonym.
+
+    (Regression: 'Hypertension' is C3117's label but also an exact synonym of C168203
+    'Family History of Hypertension'; the synonym competitor must not demote the label hit.)
+    """
+    terms = ground("Hypertension", "ncit", backend=backend, branch_root="NCIT:C7057")
+    autos = [t for t in terms if t.confidence_tier == ConfidenceTier.auto]
+    assert [t.curie for t in autos] == ["NCIT:C3117"]
+    assert any(
+        t.curie == "NCIT:C168203" and t.confidence_tier == ConfidenceTier.review
+        for t in terms
+    )
+
+
 def test_no_hit_returns_empty(backend):
     assert ground("not a real value", "uberon", backend=backend) == []
 

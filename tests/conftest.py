@@ -26,6 +26,10 @@ FIXTURE_TERMS = [
     ("ncit", "NCIT:C115935", "Healthy", None, False, None),
     ("ncit", "NCIT:C17234", "United States", None, False, None),  # geographic, off-branch
     ("ncit", "NCIT:C99999", "Obsolete Disease", None, True, "NCIT:C2955"),
+    # Label-vs-synonym competition: 'Hypertension' is C3117's label but also an exact
+    # synonym of C168203 ('Family History of Hypertension'). The label hit must win.
+    ("ncit", "NCIT:C3117", "Hypertension", None, False, None),
+    ("ncit", "NCIT:C168203", "Family History of Hypertension", None, False, None),
 ]
 
 # (ontology, curie, synonym, scope)
@@ -36,6 +40,7 @@ FIXTURE_SYNONYMS = [
     # NCIT also lists a term's preferred name as an exact synonym, so a value can hit one
     # CURIE via both label and synonym — grounding must collapse that to a single term.
     ("ncit", "NCIT:C2955", "Colorectal Carcinoma", "exact"),
+    ("ncit", "NCIT:C168203", "Hypertension", "exact"),  # synonym competitor (loses to label)
 ]
 
 # (ontology, subject, predicate, object)
@@ -44,6 +49,8 @@ FIXTURE_EDGES = [
     ("ncit", "NCIT:C9305", "rdfs:subClassOf", "NCIT:C2991"),
     ("ncit", "NCIT:C2991", "rdfs:subClassOf", "NCIT:C7057"),  # under the broad root
     ("ncit", "NCIT:C99999", "rdfs:subClassOf", "NCIT:C2991"),
+    ("ncit", "NCIT:C3117", "rdfs:subClassOf", "NCIT:C7057"),  # Hypertension (a Finding)
+    ("ncit", "NCIT:C168203", "rdfs:subClassOf", "NCIT:C7057"),
     # C17234 (United States) and C115935 (Healthy) are deliberately NOT under C2991/C7057.
 ]
 
