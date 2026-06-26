@@ -22,12 +22,16 @@ class DuckLakeBackend:
         self.dsn = dsn
         self.schema = schema
         self.con = duckdb.connect()
+        # A DuckLake whose catalog is Postgres needs both extensions; the `ducklake:` DSN
+        # prefix lets ATTACH infer the type (no `TYPE ducklake`). ATTACH takes no bind
+        # parameters, so the (trusted, caller-supplied) DSN is inlined.
         self.con.execute("INSTALL ducklake; LOAD ducklake;")
-        mode = "READ_ONLY" if read_only else ""
-        self.con.execute(f"ATTACH ? AS lake (TYPE ducklake, {mode})", [dsn])
-        self.con.execute("USE lake")
-        # Tables live under <schema>.{terms,synonyms,xrefs,edges}; share all query logic.
-        self.store = DuckStore(self.con, qualifier=f"{schema}.")
+        self.con.execute("INSTALL postgres; LOAD postgres;")
+        safe_dsn = dsn.replace("'", "''")
+        mode = " (READ_ONLY)" if read_only else ""
+        self.con.execute(f"ATTACH '{safe_dsn}' AS lake{mode}")
+        # Tables live at lake.<schema>.{terms,synonyms,xrefs,edges}; share all query logic.
+        self.store = DuckStore(self.con, qualifier=f"lake.{schema}.")
 
     def ensure(self, ontologies: list[str]) -> None:
         """No-op: a DuckLake is curated upstream; this backend only reads it (SPEC 070)."""
