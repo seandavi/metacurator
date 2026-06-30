@@ -60,6 +60,16 @@ async def test_resolve_no_pmcid_is_unknown_oa():
     assert study.oa_status == OAStatus.unknown
 
 
+async def test_resolve_coerces_numeric_ids():
+    # the live idconv API (pmc.ncbi.nlm.nih.gov) returns pmid/pmcid as JSON numbers;
+    # StudyRef requires strings, so resolve must coerce them.
+    idconv = {"records": [{"pmid": 27171425, "doi": "10.1158/x"}]}
+    async with _client(idconv=idconv) as c:
+        study = await resolve(doi="10.1158/x", client=c)
+    assert study.pmid == "27171425"
+    assert isinstance(study.pmid, str)
+
+
 async def test_resolve_unresolvable_raises():
     idconv = {"records": [{"pmid": "999", "status": "error", "errmsg": "invalid id"}]}
     async with _client(idconv=idconv) as c:
