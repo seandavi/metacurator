@@ -2,6 +2,9 @@
 
 Pure HTTP + parse; no LLM. PMID/DOI -> StudyRef via the NCBI PMC ID Converter, then OA
 status via the PMC OA service. The httpx.AsyncClient is injectable for offline tests.
+
+The ID Converter moved to pmc.ncbi.nlm.nih.gov in 2024 and returns numeric pmid/pmcid
+fields; we follow redirects and coerce ids to str so StudyRef validation holds.
 """
 
 from __future__ import annotations
@@ -12,7 +15,7 @@ import httpx
 
 from .models import OAStatus, StudyRef
 
-IDCONV_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/"
+IDCONV_URL = "https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/"
 OA_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi"
 DEFAULT_EMAIL = "metacurator@example.org"
 _TIMEOUT = httpx.Timeout(30.0)
@@ -63,7 +66,7 @@ async def resolve(
 
     own_client = client is None
     if own_client:
-        client = httpx.AsyncClient(timeout=_TIMEOUT)
+        client = httpx.AsyncClient(timeout=_TIMEOUT, follow_redirects=True)
     try:
         record = await _idconv(ident, client=client, email=email)
         if record is None or record.get("status") == "error":
@@ -71,10 +74,11 @@ async def resolve(
 
         pmcid = record.get("pmcid") or None
         oa = await _oa_status(pmcid, client=client) if pmcid else OAStatus.unknown
+        rec_pmid = record.get("pmid")
         return StudyRef(
-            pmid=record.get("pmid") or (pmid or ""),
-            pmcid=pmcid,
-            doi=record.get("doi") or doi,
+            pmid=str(rec_pmid) if rec_pmid is not None else (pmid or ""),
+            pmcid=str(pmcid) if pmcid is not None else None,
+            doi=str(record.get("doi")) if record.get("doi") else doi,
             oa_status=oa,
         )
     finally:
