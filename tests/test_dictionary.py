@@ -1,8 +1,8 @@
 """dictionary tests (SPEC 060) — the generic contract, against the synthetic test schema.
 
-Uses tests/fixtures/test_schema.yaml (the ``tdict`` fixture), not the shipped cmd schema,
-so these tests don't churn when cmd.yaml's bindings change. cmd-specific assertions live in
-test_cmd_schema.py.
+Uses tests/fixtures/test_schema.yaml (the ``tdict`` fixture), not the shipped cmd target,
+so these tests don't churn when the cmd schema's bindings change. cmd-specific assertions
+live in test_cmd_target.py.
 """
 
 from __future__ import annotations

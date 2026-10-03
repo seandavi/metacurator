@@ -6,9 +6,11 @@ must do* is in the [specs](../spec/).
 
 ## Layers
 
-1. **Schema (LinkML).** `schema/*.yaml` declares the target standard: fields, types,
+1. **Schema (LinkML).** A curation target's `targets/<name>/schema.yaml` (importing the
+   generic `schema/metacurator_core.yaml`) declares the target standard: fields, types,
    enums with ontology `meaning`s, and dynamic-enum ontology bindings. Compiles to
-   Pydantic record models + JSON Schema (ADR-0003). Pluggable — `cmd` is the first.
+   Pydantic record models + JSON Schema (ADR-0003). Pluggable — `cmd` is the first
+   target (ADR-0010, SPEC 160).
 
 2. **Typed contracts (SPEC 010).** Framework process-objects (`StudyRef`,
    `AccessionMap`, `SourceTable`, `ColumnMapping`, `GroundedTerm`, `CandidateRow`,

@@ -7,11 +7,20 @@ All notable changes to this project are documented here. The format follows
 ## [Unreleased]
 
 ### Added
+- Curation targets (ADR-0010, SPEC 160): `targets/<name>/target.yaml` + schema;
+  `load_target`; `--target` on `dictionary` and `run`; `target` on the MCP
+  `dictionary_fields` tool.
 - Initial spec-first scaffold: SPEC framework, ADRs 0001–0006, design docs.
 - LinkML schema starter: `metacurator_core` (framework contracts) and `cmd` (first
   concrete curation schema, lifted from the curatedMetagenomicData data dictionary).
 - Module stubs for the deterministic spine, the agent boundary, and pluggable ontology
   grounding backends (DuckLake + standalone local-DuckDB).
 - MIT license, packaging (`pyproject.toml`), contributor guide.
+
+### Changed
+- **Breaking:** no built-in default schema. `schema/cmd.yaml` moved to
+  `targets/cmd/schema.yaml`; `Dictionary()` without a path needs `$METACURATOR_SCHEMA`,
+  otherwise pass a path or use `load_target("cmd").schema_path` / `--target cmd`.
+- `just gen` generates from `targets/*/schema.yaml`.
 
 _Nothing is released yet; the implementation is being built from the specs._

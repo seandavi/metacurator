@@ -40,6 +40,7 @@ Each spec is self-contained and follows the template in [`_TEMPLATE.md`](_TEMPLA
 | [130](130-judgment-clients.md) | `llm`: judgment clients (LLMClient adapters) + factory | agent-support | **drafted** |
 | [140](140-profile-and-type.md) | `profile`: value-driven semantic typing + ontology routing | hybrid | **drafted** |
 | [150](150-output-serialization.md) | `emit`: self-describing output (TSV + LinkML ± Frictionless/JSON-LD) | deterministic | **drafted** |
+| [160](160-targets.md) | `target`: curation target manifests (`targets/<name>/`) | deterministic | **drafted** ✓ |
 
 Status: **drafted** = spec written to template depth; **✓** = implemented to that spec with
 offline tests. Only the glossary (000) remains a template stub.

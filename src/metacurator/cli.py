@@ -27,6 +27,23 @@ def _emit(obj: Any, as_json: bool) -> None:
         typer.echo(obj)
 
 
+def _load_dictionary(schema: str | None, target: str | None):
+    """Load the schema named by ``--schema`` or ``--target`` (SPEC 060/160).
+
+    Neither given defers to ``$METACURATOR_SCHEMA``; a missing schema or unknown target is a
+    usage error, not a traceback.
+    """
+    from .dictionary import Dictionary
+    from .target import load_target
+
+    if schema and target:
+        raise typer.BadParameter("pass --schema or --target, not both")
+    try:
+        return Dictionary(load_target(target).schema_path if target else schema)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
 @app.command()
 def version() -> None:
     """Print the metacurator version."""
@@ -55,13 +72,14 @@ def resolve(
 
 @app.command()
 def dictionary(
-    schema: str = typer.Option(None, "--schema", help="Path to a LinkML schema (default cmd)"),
+    schema: str = typer.Option(None, "--schema", help="Path to a LinkML schema"),
+    target: str = typer.Option(
+        None, "--target", help="curation target name or directory (targets/<name>)"
+    ),
     json_out: bool = typer.Option(False, "--json", help="Emit fields as JSON"),
 ) -> None:
     """Introspect the active curation schema: fields, enums, ontology bindings. SPEC 060."""
-    from .dictionary import Dictionary
-
-    d = Dictionary(schema)
+    d = _load_dictionary(schema, target)
     if json_out:
         _emit(
             {
@@ -160,7 +178,10 @@ def run(
     model: str = typer.Option("vertex:gemini-3.1-flash-lite", "--model", help="provider:model"),
     dest: str = typer.Option("./bronze", "--dest", help="where to save fetched supplements"),
     cache: str = typer.Option(None, "--cache-dir", help="ontology store cache dir"),
-    schema: str = typer.Option(None, "--schema", help="LinkML schema (default cmd)"),
+    schema: str = typer.Option(None, "--schema", help="Path to a LinkML schema"),
+    target: str = typer.Option(
+        None, "--target", help="curation target name or directory (targets/<name>)"
+    ),
     no_ground: bool = typer.Option(False, "--no-ground", help="skip ontology grounding"),
     json_out: bool = typer.Option(False, "--json", help="emit the report JSON sidecar"),
 ) -> None:
@@ -171,7 +192,6 @@ def run(
     against the ontologies the schema binds (downloaded on first use).
     """
     from .acquire import acquire
-    from .dictionary import Dictionary
     from .grounding.local_duckdb import LocalDuckDBBackend
     from .llm import make_client
     from .pipeline import curate_study
@@ -179,6 +199,7 @@ def run(
     from .resolve import resolve as _resolve
     from .tables import load_tables
 
+    dictionary = _load_dictionary(schema, target)
     study = asyncio.run(_resolve(pmid))
     typer.echo(f"resolved: pmid={study.pmid} pmcid={study.pmcid} oa={study.oa_status}")
 
@@ -191,7 +212,6 @@ def run(
         f"acquired {len(result.files)} file(s) via {result.method}; {len(tables)} table(s)"
     )
 
-    dictionary = Dictionary(schema)
     backend = None
     if not no_ground:
         base = Path(cache).expanduser() if cache else Path.home() / ".cache" / "metacurator"

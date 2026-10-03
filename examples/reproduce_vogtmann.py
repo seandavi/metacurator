@@ -53,6 +53,7 @@ from metacurator.models import SourceProvenance, SourceTable, StudyRef
 from metacurator.pipeline import curate_study
 from metacurator.report import render_markdown
 from metacurator.tables import Frame
+from metacurator.target import load_target
 
 STUDY = "VogtmannE_2016"
 
@@ -135,7 +136,7 @@ def main() -> None:
     # Reference = curated values, keyed by sample_id (for the value-level diff).
     reference = [{t: r.get(s, "") for s, t in COLUMN_MAP.items()} for r in rows]
 
-    dictionary = Dictionary()
+    dictionary = Dictionary(load_target("cmd").schema_path)
     print("Building / loading the NCIT ontology store (real semantic-sql) ...")
     backend = LocalDuckDBBackend(cache_dir=Path(args.cache))
     backend.ensure(["ncit"])

@@ -2,7 +2,7 @@
 
 A tiny ontology store (UBERON + NCIT) plus a synthetic ``test_schema.yaml``, so the
 generic dictionary/validation/pipeline tests exercise the contract without depending on the
-shipped cmd schema (cmd-specific assertions live in ``test_cmd_schema.py``). The store is
+shipped cmd target (cmd-specific assertions live in ``test_cmd_target.py``). The store is
 built directly into the four-table shape (SPEC 070) — no network, no downloaded ``.db.gz``;
 its CURIEs match the synthetic schema's bindings.
 """

@@ -1,11 +1,12 @@
 # metacurator task runner. Run `just` to list recipes.
 #
-# Codegen (`just gen`) regenerates Pydantic models + JSON Schema from the LinkML
-# schemas into src/metacurator/_generated/ (ADR-0003). Generated artifacts are
-# NEVER hand-edited and are not checked in. Needs the `schema` extra.
+# Codegen (`just gen`) regenerates Pydantic models + JSON Schema from each curation
+# target's LinkML schema (targets/<name>/schema.yaml) into src/metacurator/_generated/
+# (ADR-0003, ADR-0010). Generated artifacts are NEVER hand-edited and are not checked
+# in. Needs the `schema` extra.
 
-# LinkML schemas under schema/ to generate from (space-separated stems).
-schemas := "cmd"
+# Curation targets under targets/ to generate from (space-separated names).
+targets := "cmd"
 gen_dir := "src/metacurator/_generated"
 
 # List available recipes.
@@ -30,17 +31,17 @@ gen: gen-pydantic gen-jsonschema
 # Regenerate Pydantic models.
 gen-pydantic:
     mkdir -p {{gen_dir}}
-    for s in {{schemas}}; do \
-        echo "gen-pydantic $s"; \
-        uv run gen-pydantic schema/$s.yaml > {{gen_dir}}/$s.py; \
+    for t in {{targets}}; do \
+        echo "gen-pydantic $t"; \
+        uv run gen-pydantic targets/$t/schema.yaml > {{gen_dir}}/$t.py; \
     done
 
 # Regenerate JSON Schema.
 gen-jsonschema:
     mkdir -p {{gen_dir}}
-    for s in {{schemas}}; do \
-        echo "gen-json-schema $s"; \
-        uv run gen-json-schema schema/$s.yaml > {{gen_dir}}/$s.schema.json; \
+    for t in {{targets}}; do \
+        echo "gen-json-schema $t"; \
+        uv run gen-json-schema targets/$t/schema.yaml > {{gen_dir}}/$t.schema.json; \
     done
 
 # Remove generated artifacts.

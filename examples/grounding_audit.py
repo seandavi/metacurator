@@ -39,6 +39,7 @@ from metacurator.dictionary import Dictionary
 from metacurator.ground import ground
 from metacurator.grounding.local_duckdb import LocalDuckDBBackend
 from metacurator.models import ConfidenceTier
+from metacurator.target import load_target
 
 _MULTI = re.compile(r"[;,]")
 _SENTINELS = {"", "not applicable", "na", "n/a", "unknown", "control"}
@@ -90,7 +91,7 @@ def main() -> None:
     ap.add_argument("--examples", type=int, default=12, help="examples to show per category")
     args = ap.parse_args()
 
-    dictionary = Dictionary()
+    dictionary = Dictionary(load_target("cmd").schema_path)
     field_spec = dictionary.field(args.field)
     binding = field_spec.binding
     if binding is None:

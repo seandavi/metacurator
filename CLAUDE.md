@@ -26,11 +26,11 @@ small. Extend behavior by changing the spec first, then the code (ADR-0002).
    objects.
 3. **No hallucinated identifiers (ADR-0004).** Accessions come only from `archive`,
    ontology CURIEs only from `ground`. A model never mints an ID or value. Even the
-   starter schema (`schema/cmd.yaml`) only asserts CURIEs verified against real data.
+   starter schema (`targets/cmd/schema.yaml`) only asserts CURIEs verified against real data.
 4. **Decisions are ADRs (ADR-0001).** Architectural changes get a new ADR; supersede,
    don't edit accepted ones.
 5. **Generated code is not edited (ADR-0003).** `src/metacurator/_generated/` is built
-   from `schema/*.yaml` via `just gen`. It is **not checked in** — the directory does not
+   from `targets/*/schema.yaml` via `just gen`. It is **not checked in** — the directory does not
    exist on a fresh clone; run `just gen` (needs the `schema` extra) before anything
    imports generated models.
 
@@ -38,9 +38,12 @@ small. Extend behavior by changing the spec first, then the code (ADR-0002).
 
 - `docs/spec/` — what each component must do (start at `README.md`; 010, 070, 100, 120
   are drafted exemplars; the rest are stubs to complete).
-- `docs/adr/` — why (0001–0006).
+- `docs/adr/` — why (0001–0011).
 - `docs/design/` — how it fits (`overview.md`, `data-flow.md`).
-- `schema/` — LinkML (`metacurator_core.yaml`, `cmd.yaml`) → Pydantic + JSON Schema.
+- `schema/` — the generic LinkML core (`metacurator_core.yaml`).
+- `targets/<name>/` — curation targets (ADR-0010, SPEC 160): `target.yaml`, the target's
+  LinkML schema (`targets/cmd/schema.yaml`) → Pydantic + JSON Schema, discovery config,
+  target-specific scripts. `src/` names no target.
 - `src/metacurator/` — `models.py` (real contracts) + deterministic spine stubs +
   `judge.py` (agent boundary) + `grounding/` (backends) + `cli.py`, `mcp_server.py`.
 - `tests/` — offline; `RUN_INTEGRATION=1` for live.
@@ -65,6 +68,6 @@ via the `dev` extra.
 ## Suggested first implementation order
 
 `grounding/local_duckdb.py` + `ground.py` (SPEC 070, default backend, the no-hallucination
-core) → `dictionary.py` (SPEC 060, load `cmd.yaml`) → `archive.py` (SPEC 030) →
+core) → `dictionary.py` (SPEC 060, load `targets/cmd/schema.yaml`) → `archive.py` (SPEC 030) →
 `diff.py` (SPEC 080, port the cMD harness) → outward to `resolve/acquire/tables`, then
 `judge`, `pipeline`, and the MCP/CLI surface.
