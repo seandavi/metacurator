@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows
 - Curation targets (ADR-0010, SPEC 160): `targets/<name>/target.yaml` + schema;
   `load_target`; `--target` on `dictionary` and `run`; `target` on the MCP
   `dictionary_fields` tool.
+- Readset ids (SPEC 170): refget seqcol digest over `insdc.sra:` run units, matching
+  nextflow_telemetry ADR 0007 golden vectors.
 - Initial spec-first scaffold: SPEC framework, ADRs 0001–0006, design docs.
 - LinkML schema starter: `metacurator_core` (framework contracts) and `cmd` (first
   concrete curation schema, lifted from the curatedMetagenomicData data dictionary).
