@@ -43,6 +43,7 @@ Each spec is self-contained and follows the template in [`_TEMPLATE.md`](_TEMPLA
 | [160](160-targets.md) | `target`: curation target manifests (`targets/<name>/`) | deterministic | **drafted** ✓ |
 | [170](170-readset.md) | `readset`: readset ids (refget seqcol digest of run units) | deterministic | **drafted** ✓ |
 | [180](180-decision-clients.md) | `decision`: decision clients (DecisionClient, Clef) + factory | agent-support | **drafted** ✓ |
+| [190](190-discover.md) | `discover`: SRA candidate-study discovery + screening → readsets | hybrid | **drafted** ✓ |
 
 Status: **drafted** = spec written to template depth; **✓** = implemented to that spec with
 offline tests. Only the glossary (000) remains a template stub.

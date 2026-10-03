@@ -14,6 +14,9 @@ All notable changes to this project are documented here. The format follows
   nextflow_telemetry ADR 0007 golden vectors.
 - Decision clients (ADR-0011, SPEC 180): `DecisionClient` protocol and a Cloudflare
   Workers AI Clef client (`cloudflare:clef`, `cloudflare:clef-flash`).
+- `metacurator discover` (SPEC 190): SRA parquet prefilter, per-study states, cached Clef
+  screening, include/review/exclude rules, `studies.parquet` / `readsets.parquet` /
+  `summary.md`.
 - Initial spec-first scaffold: SPEC framework, ADRs 0001–0006, design docs.
 - LinkML schema starter: `metacurator_core` (framework contracts) and `cmd` (first
   concrete curation schema, lifted from the curatedMetagenomicData data dictionary).

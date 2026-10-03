@@ -57,6 +57,19 @@ contract be enforced structurally.
 - **`CurationReport`** — the human-facing artifact: sources used, per-column verdicts,
   ID-map notes, confidence, and a provenance trail sufficient to reproduce the run.
 
+- **`StudyDecision`** — one study screened by discovery (SPEC 190).
+  `study_accession`, `bioproject | None`, `title | None`, `n_experiments`, `decision`
+  (`include` / `review` / `exclude` / `error`), `rule_scores` (question id → score),
+  `facets` (question id → argmax option), `answers` (validated decision-client answers,
+  SPEC 180), `error | None`, `model`, `question_set_digest`, `state_digest`,
+  `snapshot | None` (source data date), `decided_at`.
+
+- **`ReadsetRow`** — one sample's runs as a processing unit (SPEC 170, SPEC 190).
+  `readset_id` (`RS.` + digest), `units` (`insdc.sra:<run>` CURIEs, sorted),
+  `study_accession`, `bioproject | None`, `sra_sample`, `biosample | None`,
+  `organism | None`, `n_runs`. Units come only from archive run accessions, never from a
+  model.
+
 ## Invariants
 
 - Every stage consumes and produces these types — **no free-text hand-off** between

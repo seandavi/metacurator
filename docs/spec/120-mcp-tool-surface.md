@@ -33,6 +33,8 @@ adapters.
 `diff`, `run` …) for human/offline use; `run` drives the pipeline (SPEC 110). Output is
 human-readable; `--json` emits the typed object. Schema-consuming commands take
 `--schema PATH` or `--target NAME|DIR` (SPEC 160); a missing schema is a usage error.
+`discover` runs SRA discovery for a target (SPEC 190); it calls a decision model, so it
+is CLI-only, not an MCP tool.
 
 ## Python API
 

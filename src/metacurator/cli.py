@@ -231,6 +231,59 @@ def run(
 
 
 @app.command()
+def discover(
+    target: str = typer.Option(..., "--target", help="curation target name or directory"),
+    out: Path = typer.Option(None, "--out", help="output dir (default ./discovery/<target>)"),
+    parquet_base: str = typer.Option(
+        None,
+        "--parquet-base",
+        help="SRA parquet base URL/dir (default $METACURATOR_SRA_PARQUET or OmicIDX)",
+    ),
+    study: list[str] = typer.Option(
+        None, "--study", help="screen only this study accession (repeatable)"
+    ),
+    limit: int = typer.Option(None, "--limit", help="screen at most N prefiltered studies"),
+    model: str = typer.Option(None, "--model", help="decision client provider:model"),
+    workers: int = typer.Option(8, "--workers", help="concurrent decision calls"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="build states only; no model calls"),
+) -> None:
+    """Find candidate studies in SRA metadata and screen them with a decision model. SPEC 190.
+
+    Writes studies.parquet, readsets.parquet and summary.md to --out. Exit 2 when the target
+    has no discovery config, 1 when any study ended in error.
+    """
+    import logging
+    import os
+
+    from .discover import DEFAULT_SRA_PARQUET, run_discovery
+    from .target import load_target
+
+    try:
+        tgt = load_target(target)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    if tgt.discovery is None:
+        typer.echo(f"target {tgt.name!r} has no discovery config", err=True)
+        raise typer.Exit(code=2)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+    base = parquet_base or os.environ.get("METACURATOR_SRA_PARQUET") or DEFAULT_SRA_PARQUET
+    counts = run_discovery(
+        tgt,
+        out=out or Path("discovery") / tgt.name,
+        base=base,
+        studies=study or None,
+        limit=limit,
+        model=model,
+        workers=workers,
+        dry_run=dry_run,
+    )
+    for key, value in counts.items():
+        typer.echo(f"{key}: {value}")
+    if counts.get("error"):
+        raise typer.Exit(code=1)
+
+
+@app.command()
 def serve() -> None:
     """Run the MCP server (streamable HTTP); deterministic tools only (ADR-0006). SPEC 120."""
     from .mcp_server import main
