@@ -1,3 +1,78 @@
 name: cmd
 title: curatedMetagenomicData
 schema: schema.yaml
+
+# SRA discovery (SPEC 190): human and mouse hosts, all body sites; study kind is a facet,
+# never a gate. Thresholds turn Clef probabilities into include / review / exclude.
+discovery:
+  decision_model: "cloudflare:clef"
+  prefilter:
+    library_source: [METAGENOMIC]
+    library_strategy: [WGS, OTHER]       # cMD has 964 OTHER/METAGENOMIC runs
+    organisms:                           # exact sra_samples.organism values; no platform filter (cMD has 10,277 ION_TORRENT runs)
+      - human gut metagenome
+      - Homo sapiens
+      - human metagenome
+      - human oral metagenome
+      - human skin metagenome
+      - human vaginal metagenome
+      - human feces metagenome
+      - human nasopharyngeal metagenome
+      - human lung metagenome
+      - human milk metagenome
+      - human reproductive system metagenome
+      - human saliva metagenome
+      - human urinary tract metagenome
+      - human blood metagenome
+      - human sputum metagenome
+      - gut metagenome
+      - oral metagenome
+      - feces metagenome
+      - skin metagenome
+      - vaginal metagenome
+      - metagenome
+      - mouse gut metagenome
+      - Mus musculus
+      - mouse metagenome
+      - mouse skin metagenome
+      - rodent metagenome
+  questions:
+    host:
+      type: choice
+      instructions: "What host were the sequenced samples taken from?"
+      criteria:
+        human: "Living humans: stool, body sites, tissues, or body fluids"
+        mouse: "Laboratory or wild mice, including germ-free or humanized mice"
+        other_animal: "Any other animal (pigs, cattle, poultry, fish, insects, other rodents)"
+        environment: "Environmental samples: soil, water, air, wastewater, built environment, food"
+        in_vitro: "Cell cultures, isolates, bioreactors, synthetic or mock communities, or no host"
+    shotgun_microbiome:
+      type: noul
+      instructions: "Does this study perform whole-genome shotgun sequencing of the microbial community in its samples?"
+      criteria:
+        "true": "Shotgun metagenomic sequencing of microbial communities"
+        "false": "16S/amplicon sequencing, single-isolate genomes, or host-only sequencing"
+    body_site:
+      type: choice
+      instructions: "Which body site were the samples taken from?"
+      criteria:
+        stool: "Feces, stool, or intestinal contents"
+        gut_tissue: "Intestinal or colon biopsies or mucosa"
+        oral: "Mouth, saliva, tongue, or dental plaque"
+        skin: "Skin"
+        vaginal: "Vagina or cervix"
+        airway: "Nose, nasopharynx, lung, or sputum"
+        other: "Other sites (blood, milk, urine) or several sites"
+        not_applicable: "No human or animal host"
+    study_kind:
+      type: choice
+      instructions: "What kind of study is this?"
+      criteria:
+        cohort: "Observational cohort, case-control, or cross-sectional study of hosts"
+        intervention: "Intervention, treatment, diet, antibiotics, transplant, or clinical trial"
+        methods: "Methods, benchmarking, protocol comparison, or mock/reference communities"
+        other: "Anything else"
+  rules:
+    - {question: host, accept: [human, mouse], include_at: 0.80, review_at: 0.50}
+    - {question: shotgun_microbiome, include_at: 0.80, review_at: 0.50}
+  facets: [host, body_site, study_kind]

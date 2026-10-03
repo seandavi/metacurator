@@ -70,7 +70,7 @@ Ontology grounding works **without** any data-lake access via the bundled local-
 backend (it builds a small ontology store from public semantic-sql files); a DuckLake
 backend is available for teams that have one. See [SPEC 070](docs/spec/070-ontology-grounding.md).
 
-## Curation targets
+## Curation targets and SRA discovery
 
 Everything specific to one curated resource lives in `targets/<name>/` (ADR-0010,
 [SPEC 160](docs/spec/160-targets.md)); `cmd` (curatedMetagenomicData) is the first. Commands
@@ -78,6 +78,20 @@ that need a schema take `--target NAME` or `--schema PATH`:
 
 ```bash
 uv run metacurator dictionary --target cmd
+```
+
+`discover` ([SPEC 190](docs/spec/190-discover.md)) prefilters the public OmicIDX SRA parquet
+export by the target's library and organism criteria, screens each study with a decision
+model (Cloudflare Workers AI Clef, [SPEC 180](docs/spec/180-decision-clients.md); needs
+`CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_AUTH_TOKEN`), and writes `studies.parquet`,
+`readsets.parquet` (one row per sample, keyed by readset id,
+[SPEC 170](docs/spec/170-readset.md)) and `summary.md`. Answers are cached, so reruns only
+call the model for new or changed studies.
+
+```bash
+uv run metacurator discover --target cmd --dry-run          # states only, no model calls
+uv run metacurator discover --target cmd --out discovery/cmd
+uv run metacurator discover --target cmd --study ERP005534  # named studies, any organism
 ```
 
 ## License
