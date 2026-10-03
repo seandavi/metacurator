@@ -12,6 +12,8 @@ All notable changes to this project are documented here. The format follows
   `dictionary_fields` tool.
 - Readset ids (SPEC 170): refget seqcol digest over `insdc.sra:` run units, matching
   nextflow_telemetry ADR 0007 golden vectors.
+- Decision clients (ADR-0011, SPEC 180): `DecisionClient` protocol and a Cloudflare
+  Workers AI Clef client (`cloudflare:clef`, `cloudflare:clef-flash`).
 - Initial spec-first scaffold: SPEC framework, ADRs 0001–0006, design docs.
 - LinkML schema starter: `metacurator_core` (framework contracts) and `cmd` (first
   concrete curation schema, lifted from the curatedMetagenomicData data dictionary).

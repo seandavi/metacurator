@@ -42,6 +42,7 @@ Each spec is self-contained and follows the template in [`_TEMPLATE.md`](_TEMPLA
 | [150](150-output-serialization.md) | `emit`: self-describing output (TSV + LinkML ± Frictionless/JSON-LD) | deterministic | **drafted** |
 | [160](160-targets.md) | `target`: curation target manifests (`targets/<name>/`) | deterministic | **drafted** ✓ |
 | [170](170-readset.md) | `readset`: readset ids (refget seqcol digest of run units) | deterministic | **drafted** ✓ |
+| [180](180-decision-clients.md) | `decision`: decision clients (DecisionClient, Clef) + factory | agent-support | **drafted** ✓ |
 
 Status: **drafted** = spec written to template depth; **✓** = implemented to that spec with
 offline tests. Only the glossary (000) remains a template stub.
