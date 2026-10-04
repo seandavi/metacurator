@@ -51,3 +51,12 @@ def test_cmd_dynamic_bindings(cmd):
 def test_cmd_ontologies_needed(cmd):
     # ancestry adds HANCESTRO to the set a backend must ensure.
     assert {"ncit", "uberon", "hancestro"} <= cmd.ontologies_needed()
+
+
+def test_cmd_target_discovery_loads():
+    disc = load_target("cmd").discovery
+    assert disc is not None
+    assert len(disc.questions) == 4 and len(disc.rules) == 2
+    assert {"human gut metagenome", "mouse gut metagenome"} <= set(disc.prefilter.organisms)
+    host = next(r for r in disc.rules if r.question == "host")
+    assert set(host.accept) == {"human", "mouse"}

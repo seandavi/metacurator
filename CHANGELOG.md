@@ -17,6 +17,10 @@ All notable changes to this project are documented here. The format follows
 - `metacurator discover` (SPEC 190): SRA parquet prefilter, per-study states, cached Clef
   screening, include/review/exclude rules, `studies.parquet` / `readsets.parquet` /
   `summary.md`.
+- cmd target discovery config (human and mouse hosts, all body sites; study kind is a
+  facet only) and `targets/cmd/eval_discovery.py`. Against the 2026-05-01 SRA snapshot:
+  115/119 cMD studies pass the prefilter, 115/115 of those are kept (113 include), all
+  six control studies behave as expected.
 - Initial spec-first scaffold: SPEC framework, ADRs 0001–0006, design docs.
 - LinkML schema starter: `metacurator_core` (framework contracts) and `cmd` (first
   concrete curation schema, lifted from the curatedMetagenomicData data dictionary).
