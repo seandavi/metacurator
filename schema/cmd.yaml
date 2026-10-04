@@ -18,6 +18,7 @@ prefixes:
   NCIT: http://purl.obolibrary.org/obo/NCIT_
   UBERON: http://purl.obolibrary.org/obo/UBERON_
   NCBITaxon: http://purl.obolibrary.org/obo/NCBITaxon_
+  MONDO: http://purl.obolibrary.org/obo/MONDO_
 
 default_prefix: cmd
 imports:
@@ -45,10 +46,21 @@ classes:
       - age_group
       - bmi
       - ancestry
+      - race
       - westernized
       - antibiotics_current_use
       - sequencing_platform
       - host_species
+      # Clinical extension (sample-level host phenotype; see SPEC 010). Optional —
+      # populated when a study deposits clinical metadata (e.g. Parkinson's cohorts).
+      - diagnosis
+      - medications
+      - disease_duration
+      - age_of_onset
+      - hoehn_yahr_stage
+      - updrs_iii_total
+      - upsit_score
+      - gi_symptom_severity
     slot_usage:
       sample_id:
         identifier: true
@@ -115,6 +127,60 @@ slots:
     range: SequencingPlatformEnum
   host_species:
     range: HostSpeciesEnum
+
+  # --- Clinical extension --------------------------------------------------------
+  race:
+    description: >-
+      Self-reported race; dynamic enum bound to the NCIT Race branch. Distinct from
+      `ancestry` (HANCESTRO genetic ancestry): race is a social/demographic category.
+    range: RaceEnum
+  diagnosis:
+    description: >-
+      Clinical diagnosis as a MONDO term. Dynamic enum over the MONDO disease branch —
+      MONDO is the disease-specific standard (e.g. Parkinson disease MONDO:0005180,
+      multiple system atrophy MONDO:0007803). Complements `disease` (NCIT-bound): the two
+      are independent bindings (multi-ontology on a single slot needs a core change, so
+      `diagnosis` is kept separate for now). Validated by grounding (SPEC 070).
+    range: DiagnosisEnum
+  medications:
+    description: >-
+      Medications the subject is currently taking. Multivalued dynamic enum over the NCIT
+      Pharmacologic Substance branch (e.g. Levodopa NCIT:C611, Carbidopa NCIT:C47431).
+      Grounding (SPEC 070) verifies each value against NCIT (ADR-0004).
+    range: MedicationEnum
+    multivalued: true
+  disease_duration:
+    description: >-
+      Time since diagnosis, in years (numeric). No ontology binding — there is no verified
+      NCIT/MONDO term for the duration *value*, so binding a CURIE would be unverified
+      (ADR-0004).
+    range: float
+  age_of_onset:
+    description: Age at symptom onset, in years (numeric). Unbound for the same reason as `disease_duration`.
+    range: float
+  hoehn_yahr_stage:
+    description: >-
+      Hoehn & Yahr stage of Parkinson's disease (0–5, half-stages allowed; numeric). Unbound:
+      no verified ontology term grounded for the scale, so no CURIE is asserted (ADR-0004).
+    range: float
+  updrs_iii_total:
+    description: >-
+      MDS-UPDRS Part III (motor examination) total score (integer). The slot maps to the
+      MDS-UPDRS questionnaire concept NCIT:C100769 (VERIFIED via grounding); the value
+      itself is a numeric score, not an ontology term.
+    range: integer
+    exact_mappings:
+      - NCIT:C100769
+  upsit_score:
+    description: >-
+      University of Pennsylvania Smell Identification Test (UPSIT) score, 0–40 (integer).
+      Unbound — no verified ontology term grounded for the test (ADR-0004).
+    range: integer
+  gi_symptom_severity:
+    description: >-
+      Gastrointestinal symptom severity score (numeric questionnaire total). Unbound
+      (no verified ontology term; ADR-0004).
+    range: float
 
 enums:
   BodySiteEnum:
@@ -238,3 +304,52 @@ enums:
       IlluminaMiSeq:
       IonProton:
       BGISeq:
+
+  RaceEnum:
+    description: >-
+      Self-reported race, bound to NCIT. A dynamic enum — any NCIT race term is permissible;
+      grounding (SPEC 070) verifies each value rather than a hand-typed list (ADR-0004).
+    include:
+      - reachable_from:
+          source_ontology: obo:ncit
+          source_nodes:
+            # "Race" — VERIFIED against NCIT: the parent of White (C41261), Asian (C41260),
+            # Black or African American (C16352), … i.e. every cMD race value.
+            - NCIT:C17049
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
+
+  DiagnosisEnum:
+    description: >-
+      Clinical diagnosis, bound to MONDO. A dynamic enum over the MONDO disease branch —
+      grounding (SPEC 070) verifies each value against MONDO (downloaded on first use from
+      semantic-sql, like NCIT/UBERON). Kept distinct from DiseaseEnum (NCIT) because a single
+      slot grounding against two ontologies needs a core change (OntologyBinding is
+      single-ontology today).
+    include:
+      - reachable_from:
+          source_ontology: obo:mondo
+          source_nodes:
+            # "disease" — VERIFIED against MONDO: the root that subsumes Parkinson disease
+            # (MONDO:0005180), multiple system atrophy (MONDO:0007803), and all disease terms.
+            - MONDO:0000001
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
+
+  MedicationEnum:
+    description: >-
+      Medication / pharmacologic substance, bound to NCIT. A dynamic enum — any NCIT
+      pharmacologic substance is permissible; grounding (SPEC 070) verifies each value
+      (ADR-0004). Used multivalued on the `medications` slot.
+    include:
+      - reachable_from:
+          source_ontology: obo:ncit
+          source_nodes:
+            # "Pharmacologic Substance" — VERIFIED against NCIT: subsumes Levodopa (C611),
+            # Carbidopa (C47431), Amantadine (C61632), Rasagiline (C66510), …
+            - NCIT:C1909
+          relationship_types:
+            - rdfs:subClassOf
+          is_direct: false
