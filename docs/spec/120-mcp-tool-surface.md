@@ -18,7 +18,8 @@ adapters.
 - **Transport: streamable HTTP** (FastMCP), so it is hostable and maintainable as a
   long-running endpoint — not a stdio subprocess (ADR-0006).
 - **Tools exposed (deterministic only):** `resolve`, `archive`, `acquire`, `tables`,
-  `dictionary` (introspect the active schema: fields, enums, ontology bindings),
+  `dictionary` (introspect a schema given by path or curation target, SPEC 160: fields,
+  enums, ontology bindings),
   `ground`, `diff`, `report`. Plus resources for the active schema document.
 - **No `judge` tools.** The server hosts no LLM; the consuming agent runs `judge` calls
   with its own model (ADR-0006). This keeps the server pure, cacheable, hostable.
@@ -30,7 +31,10 @@ adapters.
 
 `metacurator <command>` mirrors the tools (`resolve`, `archive`, `acquire`, `ground`,
 `diff`, `run` …) for human/offline use; `run` drives the pipeline (SPEC 110). Output is
-human-readable; `--json` emits the typed object.
+human-readable; `--json` emits the typed object. Schema-consuming commands take
+`--schema PATH` or `--target NAME|DIR` (SPEC 160); a missing schema is a usage error.
+`discover` runs SRA discovery for a target (SPEC 190); it calls a decision model, so it
+is CLI-only, not an MCP tool.
 
 ## Python API
 

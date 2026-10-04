@@ -11,8 +11,9 @@ no curated values. No identifier is ever minted by a model.
 
 from __future__ import annotations
 
+from datetime import datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -164,3 +165,41 @@ class CurationReport(BaseModel):
     diffs: list[DiffResult] = Field(default_factory=list)
     notes: str | None = None
     provenance: dict[str, Any] = Field(default_factory=dict)
+
+
+Decision = Literal["include", "review", "exclude", "error"]
+
+
+class StudyDecision(BaseModel):
+    """One study screened by discovery (SPEC 190)."""
+
+    study_accession: str
+    bioproject: str | None = None
+    title: str | None = None
+    n_experiments: int
+    decision: Decision
+    rule_scores: dict[str, float] = Field(default_factory=dict)
+    facets: dict[str, str] = Field(default_factory=dict)
+    answers: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    error: str | None = None
+    model: str
+    question_set_digest: str
+    state_digest: str
+    snapshot: str | None = None
+    decided_at: datetime
+
+
+class ReadsetRow(BaseModel):
+    """One sample's runs as a processing unit, keyed by readset id (SPEC 170/190).
+
+    Units come only from archive run accessions — never from a model (ADR-0004).
+    """
+
+    readset_id: str
+    units: list[str]
+    study_accession: str
+    bioproject: str | None = None
+    sra_sample: str
+    biosample: str | None = None
+    organism: str | None = None
+    n_runs: int

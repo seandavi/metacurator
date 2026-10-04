@@ -11,6 +11,7 @@ from metacurator import judge
 from metacurator.dictionary import Dictionary
 from metacurator.llm import LLMContractError, make_client, structured
 from metacurator.llm.vertex import VertexClient, to_gemini_schema
+from metacurator.target import load_target
 
 # -- make_client factory -----------------------------------------------------
 
@@ -159,5 +160,5 @@ def test_vertex_propose_mapping_via_model(monkeypatch):
         n_rows=1,
         n_cols=1,
     )
-    mapping = judge.propose_mapping(table, Dictionary(), llm=client)
+    mapping = judge.propose_mapping(table, Dictionary(load_target("cmd").schema_path), llm=client)
     assert mapping.items[0].target_field == "sex"

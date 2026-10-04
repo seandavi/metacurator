@@ -4,8 +4,8 @@ description: >-
   A synthetic LinkML schema used by the dictionary / validation / pipeline tests so they
   exercise the *generic* contract (identifier, required, multivalued, numeric, static enum
   with a meaning, dynamic reachable_from enums, and a dynamic enum with an explicit
-  permissible value) WITHOUT depending on the shipped cmd schema. cmd-specific assertions
-  live only in tests/test_cmd_schema.py. Its CURIEs match the fixture ontology store in
+  permissible value) WITHOUT depending on the shipped cmd target. cmd-specific assertions
+  live only in tests/test_cmd_target.py. Its CURIEs match the fixture ontology store in
   conftest.py.
 license: MIT
 default_range: string

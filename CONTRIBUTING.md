@@ -24,7 +24,7 @@ uv run pytest
 ```
 
 - **Generated code is not edited.** `src/metacurator/_generated/` (Pydantic models, JSON
-  Schema) is regenerated from `schema/*.yaml`; change the LinkML, then regenerate
+  Schema) is regenerated from `targets/*/schema.yaml`; change the LinkML, then regenerate
   (`just gen`). See ADR-0003.
 - **Tests are offline by default.** Use fixtures in `tests/fixtures/` (a tiny ontology
   store, saved supplement files, an ENA snapshot). Live network tests are opt-in via

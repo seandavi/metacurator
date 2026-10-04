@@ -87,11 +87,16 @@ def build_server():
         }
 
     @mcp.tool
-    def dictionary_fields(schema_path: str | None = None) -> dict[str, Any]:
-        """Introspect the active schema: fields, enums, ontology bindings. SPEC 060."""
+    def dictionary_fields(
+        schema_path: str | None = None, target: str | None = None
+    ) -> dict[str, Any]:
+        """Introspect a schema (path or curation target): fields, enums, bindings. SPEC 060."""
         from .dictionary import Dictionary
+        from .target import load_target
 
-        d = Dictionary(schema_path)
+        if schema_path and target:
+            raise ValueError("pass schema_path or target, not both")
+        d = Dictionary(load_target(target).schema_path if target else schema_path)
         fields = {
             name: {
                 "range": fs.range,

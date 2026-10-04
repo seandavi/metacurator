@@ -14,7 +14,7 @@ narrow agent boundary for the few genuinely ambiguous steps.
 > along with the agent boundary (`judge`) and the three faces — Python API, CLI, and the
 > streamable-HTTP MCP server. Tests run offline (`uv run pytest`); set `RUN_INTEGRATION=1`
 > for the live-network cases. The schema and curation coverage are still illustrative
-> (one starter schema, `cmd`). This repo is built *from its specs* — see below.
+> (one curation target, `targets/cmd/`). This repo is built *from its specs* — see below.
 
 ## Why it exists
 
@@ -43,7 +43,7 @@ Start here: [`docs/spec/README.md`](docs/spec/README.md).
 ## Architecture at a glance
 
 ```
-LinkML schema (schema/*.yaml)  ──gen──▶  Pydantic models + JSON Schema   (ADR-0003)
+LinkML schema (targets/*/schema.yaml)  ──gen──▶  Pydantic models + JSON Schema   (ADR-0003)
         │ declares slots, enums, ontology bindings
         ▼
 Deterministic spine (src/metacurator/*)          Agent boundary (judge.py)
@@ -69,6 +69,16 @@ uv add "metacurator[schema,dev]"   # + LinkML codegen + test tooling
 Ontology grounding works **without** any data-lake access via the bundled local-DuckDB
 backend (it builds a small ontology store from public semantic-sql files); a DuckLake
 backend is available for teams that have one. See [SPEC 070](docs/spec/070-ontology-grounding.md).
+
+## Curation targets
+
+Everything specific to one curated resource lives in `targets/<name>/` (ADR-0010,
+[SPEC 160](docs/spec/160-targets.md)); `cmd` (curatedMetagenomicData) is the first. Commands
+that need a schema take `--target NAME` or `--schema PATH`:
+
+```bash
+uv run metacurator dictionary --target cmd
+```
 
 ## License
 

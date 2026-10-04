@@ -21,7 +21,8 @@ field's values must satisfy). Validate a `ColumnMapping` (targets exist) and a
 - **`FieldSpec`** — one slot: `name`, `range`, `required`, `multivalued`, `enum_name |
   None`, `permissible_values` (value → `meaning` CURIE or `None`), `binding | None`.
   `is_enum` ⇔ `enum_name is not None`; `is_dynamic_enum` ⇔ `binding is not None`.
-- **`Dictionary`** — the loaded schema for one record class (default `Sample` in `cmd`):
+- **`Dictionary`** — the loaded schema for one record class (default: the single concrete
+  class, or `Sample` when several exist):
   `fields()`, `field(name)`, `identifier`, `bindings()`, `ontologies_needed()`,
   `validate_mapping(mapping) -> list[str]`, `validate_row(row, *, backend=None) ->
   list[str]`. Validators return a list of human-readable error strings (empty ⇒ valid).
@@ -30,8 +31,9 @@ field's values must satisfy). Validate a `ColumnMapping` (targets exist) and a
 
 - Read via `linkml-runtime`'s `SchemaView`; do **not** depend on full `linkml` at runtime
   (codegen is a build step, ADR-0003). Generated Pydantic record models come from
-  `_generated/`. The schema path is configuration; `cmd` is schema #1 (located relative to
-  the repo or via `$METACURATOR_SCHEMA`).
+  `_generated/`. The schema path is configuration, resolved as: explicit path →
+  `$METACURATOR_SCHEMA` → error. There is no built-in default schema; curation targets
+  supply schemas (`load_target(name).schema_path`, SPEC 160, ADR-0010).
 - Per field, surface range/`required`/`multivalued`; for enum ranges, the permissible
   values and their `meaning` CURIEs; for a dynamic enum (`include: [{reachable_from}]`),
   the branch binding — `source_ontology` → `ontology`, `source_nodes[0]` → `branch_root`,
@@ -56,14 +58,18 @@ field's values must satisfy). Validate a `ColumnMapping` (targets exist) and a
 
 ## Errors
 
-- Schema file not found / unreadable → explicit error naming the path searched.
+- No schema given and `$METACURATOR_SCHEMA` unset → `FileNotFoundError("no schema given:
+  pass a schema path or --target, or set $METACURATOR_SCHEMA")`.
+- Schema file not found / unreadable → explicit error naming the path.
 - Validation never raises on bad *data*; it returns errors. It may raise on a bad *schema*
   reference (e.g. unknown class).
 
 ## Test cases
 
-- Load `cmd.yaml`: `Sample` has the expected slots; `sample_id` is the identifier; `age`
-  is `float`; `ncbi_accession` is multivalued.
+- Load the synthetic test schema (`tests/fixtures/test_schema.yaml`): `TestRecord` has the
+  expected slots; `record_id` is the identifier; `score` is `float`; `accession` is
+  multivalued. (Target schemas are asserted separately, e.g. `tests/test_cmd_target.py`.)
+- With no path and no `$METACURATOR_SCHEMA`, construction raises the error above.
 - A `ColumnMapping` to an unknown field → non-empty errors; a valid one → `[]`.
 - A static-enum value outside the permissible set (e.g. `body_site = "spleen"`) → error;
   a permissible one (`feces`) → ok.
@@ -74,7 +80,7 @@ field's values must satisfy). Validate a `ColumnMapping` (targets exist) and a
 
 ## Open questions
 
-- Packaging the schema files as package data so a wheel install can locate `cmd.yaml`
-  without the source tree (currently resolved relative to the repo / `$METACURATOR_SCHEMA`).
+- Packaging targets (and their schemas) as package data so a wheel install can locate them
+  without the source tree (currently a repo checkout or `$METACURATOR_TARGETS`, SPEC 160).
 - Whether to validate cross-field constraints (e.g. `age_unit` required when `age` set) —
   out of scope until a schema declares them as rules.

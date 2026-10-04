@@ -1,6 +1,6 @@
 """dictionary — LinkML schema load & validation. Implement to SPEC 060. [deterministic]
 
-Loads the active LinkML curation schema (default: cmd) via linkml-runtime; exposes fields,
+Loads a LinkML curation schema (a target's, SPEC 160) via linkml-runtime; exposes fields,
 enums (with ontology ``meaning``s), and dynamic-enum (``reachable_from``) bindings; and
 validates a ColumnMapping (targets exist) and a CandidateRow (types, permissible values,
 ontology-branch constraints). Branch checks delegate to SPEC 070 — the dictionary never
@@ -34,16 +34,12 @@ def _onto_from_curie(curie: str) -> str:
 
 
 def default_schema_path() -> Path:
-    """Locate ``cmd.yaml``: ``$METACURATOR_SCHEMA``, else ``schema/cmd.yaml`` up-tree."""
+    """``$METACURATOR_SCHEMA``; there is no built-in schema (targets supply them, SPEC 160)."""
     env = os.environ.get("METACURATOR_SCHEMA")
     if env:
         return Path(env)
-    for parent in Path(__file__).resolve().parents:
-        candidate = parent / "schema" / "cmd.yaml"
-        if candidate.exists():
-            return candidate
     raise FileNotFoundError(
-        "could not locate schema/cmd.yaml; set $METACURATOR_SCHEMA to the schema path"
+        "no schema given: pass a schema path or --target, or set $METACURATOR_SCHEMA"
     )
 
 
@@ -81,8 +77,8 @@ class Dictionary:
     """Loaded curation schema for one record class. See SPEC 060.
 
     ``class_name`` defaults to the schema's single concrete (non-abstract) class — so the
-    toolkit is schema-pluggable, not tied to cmd's ``Sample``. If a schema has several
-    concrete classes, ``Sample`` is preferred when present, else pass ``class_name``.
+    toolkit is schema-pluggable. If a schema has several concrete classes, ``Sample`` is
+    preferred when present, else pass ``class_name``.
     """
 
     def __init__(self, path: Path | str | None = None, *, class_name: str | None = None) -> None:
