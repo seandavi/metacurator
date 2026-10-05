@@ -1,6 +1,6 @@
 """LocalDuckDBBackend — default, zero-infrastructure grounding. SPEC 070, ADR-0005.
 
-Builds a small local ontology store from semantic-sql's public ``bbop-sqlite`` files:
+Builds a small local ontology store from semantic-sql's public CDN files:
 ``ensure()`` downloads the needed ``<onto>.db.gz``, projects the four tables
 (terms/synonyms/xrefs/edges) into a local DuckDB cache, and grounds against it. Only
 ontologies the active schema references are fetched. Closure is a recursive CTE over
@@ -23,7 +23,8 @@ from ..models import GroundedTerm
 from ._store import STORE_DDL, DuckStore
 from .base import DEFAULT_PREDICATES
 
-SEMSQL_BASE_URL = "https://s3.amazonaws.com/bbop-sqlite"
+# semantic-sql CDN; replaced the raw ``bbop-sqlite`` S3 bucket (retired 2026-08-28).
+SEMSQL_BASE_URL = "https://semanticsql.berkeleybop.io"
 
 # semantic-sql predicate IRIs/CURIEs the projection reads (SPEC 070).
 _P_LABEL = "rdfs:label"
