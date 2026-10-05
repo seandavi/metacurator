@@ -74,8 +74,10 @@ has no SQL `CYCLE` clause).
 ## Backends (ADR-0005)
 
 1. **`LocalDuckDBBackend` (default, no infrastructure).** `ensure()` downloads the
-   needed `<onto>.db.gz` from semantic-sql's public `bbop-sqlite` bucket, projects the
-   four tables into a local DuckDB file (cached under `data/`), and grounds against it.
+   needed `<onto>.db.gz` from semantic-sql's public CDN
+   (`https://semanticsql.berkeleybop.io/<onto>.db.gz`; the raw `bbop-sqlite` S3 bucket
+   was retired 2026-08-28), projects the four tables into a local DuckDB file (cached
+   under `data/`), and grounds against it.
    Only ontologies the active schema references are fetched. Semantic-sql encoding facts
    the projection relies on (validated against a real `hancestro.db`):
    - base `statements` table: literals in `value`, IRI objects in `object`, 8 cols incl.

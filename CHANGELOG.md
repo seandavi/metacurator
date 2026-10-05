@@ -34,4 +34,9 @@ All notable changes to this project are documented here. The format follows
   otherwise pass a path or use `load_target("cmd").schema_path` / `--target cmd`.
 - `just gen` generates from `targets/*/schema.yaml`.
 
+### Fixed
+- `LocalDuckDBBackend` downloads from the semantic-sql CDN
+  (`https://semanticsql.berkeleybop.io`); the raw `bbop-sqlite` S3 bucket it used
+  returns `AccessDenied` since 2026-08-28 (#29).
+
 _Nothing is released yet; the implementation is being built from the specs._
